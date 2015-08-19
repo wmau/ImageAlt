@@ -107,14 +107,13 @@ end
 SpeedMap = SpeedMap./OccMap;
 RunSpeedMap = RunSpeedMap./RunOccMap;
 
-p=ProgressBar(NumNeurons);
+
 
 parfor i = 1:NumNeurons
-  p.progress;
   TMap{i} = calcmapdec(FT(i,:),RunOccMap,Xbin,Ybin,isrunning);
   pval(i) = StrapIt(FT(i,:),RunOccMap,Xbin,Ybin,cmperbin,runepochs,isrunning,0);
 end
-p.stop;
+
 %PFreview(FT,TMap,t,x,y,pval,ip,find(pval > 0.95)) this finds all of the
 %decent placefields
 

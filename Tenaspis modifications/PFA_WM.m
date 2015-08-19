@@ -11,7 +11,7 @@ CalculatePlacefields_WM(roomstr,lengthcrit);
 PFstats_WM(lengthcrit);
 
 % Step 3: Extract Traces
-ExtractTracesProc_WM('D1Movie.h5',rawfile,lengthcrit)
+%ExtractTracesProc_WM('D1Movie.h5',rawfile,lengthcrit)
 
 clear all;
 %load(['PlaceMaps',num2str(lengthcrit),'.mat']);

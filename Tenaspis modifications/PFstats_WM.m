@@ -1,4 +1,4 @@
-function [] = PFstats(lengthcrit)
+function [] = PFstats_WM(lengthcrit)
 %UNTITLED2 Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -54,7 +54,7 @@ for i = 1:NumNeurons
     display(['calculating PF visits for neuron ',int2str(i)])
     PFnumepochs(i,1) = 0;
     PFepochs{i,1} = [];
-    for j = 1:NumPF(i)
+    parfor j = 1:NumPF(i)
         PixelBool = zeros(1,NumFrames);
         minp = min(PFpixels{i,j});
         maxp = max(PFpixels{i,j});
@@ -91,7 +91,7 @@ for i = 1:NumNeurons
     end
 end
 
-save PFstats.mat PFpcthits PFnumhits PFactive PFnumepochs PFepochs MaxPF PFcentroid PFsize PFpixels -v7.3;
+save(['PFstats',num2str(lengthcrit),'.mat'], 'PFpcthits', 'PFnumhits', 'PFactive', 'PFnumepochs', 'PFepochs', 'MaxPF', 'PFcentroid', 'PFsize', 'PFpixels', '-v7.3');
 
 
 
