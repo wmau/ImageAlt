@@ -28,7 +28,6 @@ function X = LinearizeTrajectory(x,y,mazetype)
             centroidx = mean(unique(bounds.center.x));
             centroidy = mean(unique(bounds.center.y));
             stemlength = bounds.center.x(2) - bounds.center.x(1); 
-            s
             %Convert from Cartesian coordinates to polar coordinates. 
             [angs,radii] = cart2pol(x-centroidx, y-centroidy); 
             angs = mod(angs,2*pi); 
