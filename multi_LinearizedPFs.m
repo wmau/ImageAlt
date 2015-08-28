@@ -34,7 +34,7 @@ function sortedrates = multi_LinearizedPFs(regfilepath,basedate,dates)
     mazetype = 'tmaze';                         %Hard-coded for alternation. 
 
     %Linearize trajectory. 
-    cd(basepath); 
+    cd(basepath);                               %Necessary because sections() loads from pwd.
     load(fullfile(basepath,'Pos_align.mat'),'x_adj_cm','y_adj_cm');
     X = cell(1,numdates+1); 
     X{1} = LinearizeTrajectory(x_adj_cm,y_adj_cm,mazetype);
@@ -123,6 +123,7 @@ function sortedrates = multi_LinearizedPFs(regfilepath,basedate,dates)
     end
   
 %% Plot.
+    %Necessary to not screw up figure titles. 
     basedate(basedate=='_') = '-';
     for i=1:numdates
         dates{i}(dates{i}=='_') = '-';
