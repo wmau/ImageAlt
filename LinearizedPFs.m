@@ -14,7 +14,8 @@ function normalizedrate = LinearizedPFs(X,FT)
 %       normalizedrate: NxB matrix (N=number of neurons that fired,
 %       B=number of spatial bins) containing occupancy-normalized transient
 %       rates. Each row (neuron) is normalized to the max firing rate of
-%       that row so max(normalizedrate) = 1. 
+%       that row so max(normalizedrate) = 1. Rows are sorted according to
+%       where the max firing rate occurred on the maze. 
 %
 
 %% Align imaging to tracking. 
