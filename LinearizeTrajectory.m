@@ -34,7 +34,11 @@ function X = LinearizeTrajectory(x,y,mazetype)
            
             %Get timestamps for left and right trials and when mouse is on
             %stem. 
-            Alt = postrials(x,y,0,'skip_rot_check',1);
+            try 
+                load(fullfile(pwd,'Alternation.mat'));
+            catch
+                Alt = postrials(x,y,0,'skip_rot_check',1);
+            end
             onstem = Alt.section==2; 
             
             %Get the extreme radii on the stem. 

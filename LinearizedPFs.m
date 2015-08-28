@@ -1,21 +1,26 @@
-function normalizedrate = LinearizedPFs(X,FT)
+function [normalizedrate,order,inactive] = LinearizedPFs(X,FT)
 %normalizedrate = LinearizedPFs(X,FT)
 %   
 %   Find place fields in linearized space on the alternation Tmaze. 
 %
-%   INPUTS:
+%   INPUTS
 %       X: Linearized position vector from LinearizeTrajectory().
 %
 %       FT: Binary NxT matrix (N=number of neurons, T=number of frames)
 %       specifying when calcium transients occurred. From ProcOut out of
 %       TENASPIS. 
 %
-%   OUTPUT: 
-%       normalizedrate: NxB matrix (N=number of neurons that fired,
-%       B=number of spatial bins) containing occupancy-normalized transient
-%       rates. Each row (neuron) is normalized to the max firing rate of
-%       that row so max(normalizedrate) = 1. Rows are sorted according to
-%       where the max firing rate occurred on the maze. 
+%   OUTPUTS
+%       normalizedrate: NxB matrix (N=number of neurons, B=number of
+%       spatial bins) containing occupancy-normalized, speed-thresholded
+%       transient rates. Each row (neuron) is normalized to the max firing
+%       rate of that row. Rows are sorted according to where the max firing
+%       rate occurred on the maze.
+%
+%       order: Vector specifying the pre-sorted indices of normalizedrate.
+%
+%       inactive: Vector containing 1s if the neuron did not fire, 0s if it
+%       did. 
 %
 
 %% Align imaging to tracking. 
@@ -37,23 +42,24 @@ function normalizedrate = LinearizedPFs(X,FT)
     [occ,occ_bins] = hist(X,nbins); 
     
     %Preallocate.
-    normalizedrate = nan(nneurons,nbins); 
+    rate = nan(nneurons,nbins); 
     
     %Bin locations where each neuron spiked then divide by the occupancy
     %map.
     for this_neuron = 1:nneurons
         spks = X(FT(this_neuron,isrunning));
         spkpos = hist(spks,nbins);
-        normalizedrate(this_neuron,:) = spkpos ./ occ; 
+        rate(this_neuron,:) = spkpos ./ occ; 
     end
 
     %Find peak firing rate. 
-    [peak,inds] = max(normalizedrate,[],2);
-    normalizedrate(peak==0,:) = []; %Delete neurons that don't fire. 
-    inds(peak==0) = []; peak(peak==0) = []; 
+    [peak,inds] = max(rate,[],2);
+    inactive = peak==0;
+%     rate(inactive,:) = []; %Delete neurons that don't fire. 
+%     inds(inactive) = []; peak(inactive) = []; 
     
     %Normalize responses for all neurons such that 1 is the max rate. 
-    normalizedrate = bsxfun(@rdivide,normalizedrate,peak);
+    normalizedrate = bsxfun(@rdivide,rate,peak);
     
     %Smooth. 
     sm = fspecial('gaussian');
@@ -62,8 +68,9 @@ function normalizedrate = LinearizedPFs(X,FT)
     end
     
     %Sort according to position where peak firing rate occurred. 
-    [~,sorted] = sort(inds);
-    normalizedrate = normalizedrate(sorted,:);
+    [~,order] = sort(inds);
+    inactive = inactive(order);
+    normalizedrate = normalizedrate(order,:);
     
 end
     
