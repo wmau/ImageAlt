@@ -1,4 +1,4 @@
-function [lefttrials,righttrials] = LinearizedPFs(X,FT)
+function [lefttrials,righttrials,goalbins] = LinearizedPFs(X,FT,bounds)
 %normalizedrate = LinearizedPFs(X,FT)
 %   
 %   Find place fields in linearized space on the alternation Tmaze. 
@@ -11,6 +11,22 @@ function [lefttrials,righttrials] = LinearizedPFs(X,FT)
 %       TENASPIS. 
 %
 %   OUTPUTS
+%       lefttrials & righttrials: structure arrays with the following
+%       fields for left and right trials...
+%           rate: Normalized firing rate sorted such that rows of neurons
+%           tile the environment. 
+%           
+%           inactive: Logical vector (rank the same as rate) indicating
+%           whether a neuron was active for that trial type. 
+%
+%           order: Vector of indices that tells you how the neurons from FT
+%           were sorted into rate. 
+%
+%       goalbins: Structure array containing the fields 'l' and 'r' for
+%       left and right respectively. The elements in these fields are the
+%       boundaries surrounding the left and right goal locations in
+%       linearized space according to getsections. 
+%
 
 
 %% Align imaging to tracking. 
@@ -28,13 +44,21 @@ function [lefttrials,righttrials] = LinearizedPFs(X,FT)
     load(fullfile(pwd,'Alternation.mat')); 
     left = Alt.choice == 1;
     right = Alt.choice == 2; 
+    atleftgoal = Alt.goal==1;
+    atrightgoal = Alt.goal==2; 
     
 %% Create heatmap.
     %Spatial bins.
     nbins = 100; 
     
     %Occupancy histogram.
-    occ = hist(X,nbins); 
+    [occ,edges] = histcounts(X,nbins); 
+    
+    %Get bins corresponding to the reward location. 
+    binnedleftgoal = histcounts(X(atleftgoal),edges);
+    binnedrightgoal = histcounts(X(atrightgoal),edges); 
+    goalbins.l = [find(binnedleftgoal,1,'first'),find(binnedleftgoal,1,'last')];  
+    goalbins.r = [find(binnedrightgoal,1,'first'),find(binnedrightgoal,1,'last')];  
     
     %Preallocate.
     lrate = nan(nneurons,nbins); 

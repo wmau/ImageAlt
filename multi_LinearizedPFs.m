@@ -1,10 +1,10 @@
-function lsortedrates = multi_LinearizedPFs(regfilepath,basedate,dates)
+function sortedrates = multi_LinearizedPFs(regfilepath,basedate,dates)
 %sortedrates = multi_LinearizedPFs(regfilepath,basedate,dates)
 %   
 %   Plots heatmaps for linearized place fields across multiple sessions.
 %   The order of neurons as they tile the environment is determined by the
 %   place field activations in the base date and this order is applied to
-%   all other sessions.
+%   all other sessions. The red line indicates the reward location. 
 %
 %   INPUTS
 %       regfilepath: Location of first recording session that should
@@ -17,12 +17,11 @@ function lsortedrates = multi_LinearizedPFs(regfilepath,basedate,dates)
 %       examine. 
 %
 %   OUTPUT
-%       sortedrates: D-element cell array (D=number of total dates you're
-%       examining). Each element is a NxB array (N=total number of active
-%       neurons in session 1, B=number of spatial bins) in the same format
-%       as the output of LinearizedPFs(). Neurons are all sorted in the
-%       same order, defined by how neurons tiled the environment in session
-%       1.
+%       sortedrates: 2xD cell array (D=number of sessions). The first row
+%       contains the normalized and sorted transients for left trials. The
+%       second contains the right trials. The first column is the base date
+%       and the following columns are the rest of the sessions in the order
+%       specified in the 'dates' argument. 
 %
 
 %% Get the linearized place fields from the base date. 
@@ -37,23 +36,25 @@ function lsortedrates = multi_LinearizedPFs(regfilepath,basedate,dates)
     cd(basepath);                               %Necessary because sections() loads from pwd.
     load(fullfile(basepath,'Pos_align.mat'),'x_adj_cm','y_adj_cm');
     X = cell(1,numdates+1); 
-    X{1} = LinearizeTrajectory(x_adj_cm,y_adj_cm,mazetype);
+    [X{1},bounds] = LinearizeTrajectory(x_adj_cm,y_adj_cm,mazetype);
 
     %Get linearized place fields. 
     load(fullfile(basepath,'ProcOut.mat'),'FT'); 
 
-    [ltrials(1),rtrials(1)] = LinearizedPFs(X{1},FT); 
-    numneurons = size(ltrials(1).rate,1);           %Total number of detected neurons.
+    [ltrials,rtrials,goalbins] = LinearizedPFs(X{1},FT,bounds); 
+    LNumNeurons = size(ltrials(1).rate,1);           %Total number of detected neurons.
     numinactive.l = sum(ltrials.inactive);          %Number of inactive neurons.
     numinactive.r = sum(rtrials.inactive);          
-    numactive.l = numneurons - numinactive.l;       %Number of active neurons. 
-    numactive.r = numneurons - numinactive.r; 
+    numactive.l = LNumNeurons - numinactive.l;       %Number of active neurons. 
+    numactive.r = LNumNeurons - numinactive.r; 
     
     %Delete inactive neurons.
     ltrials(1).rate(ltrials(1).inactive,:) = [];    rtrials(1).rate(rtrials(1).inactive,:) = [];
     ltrials(1).order(ltrials(1).inactive) = [];     rtrials(1).order(rtrials(1).inactive) = []; 
     
     %Preallocate.
+    lsortedrates = cell(numdates+1,1);
+    rsortedrates = lsortedrates; 
     lsortedrates{1} = ltrials(1).rate;
     rsortedrates{1} = rtrials(1).rate; 
 
@@ -97,11 +98,11 @@ function lsortedrates = multi_LinearizedPFs(regfilepath,basedate,dates)
         %Linearize trajectory. 
         cd(thispath);
         load(fullfile(thispath,'Pos_align.mat'),'x_adj_cm','y_adj_cm'); 
-        X{thisdate+1} = LinearizeTrajectory(x_adj_cm,y_adj_cm,mazetype);
+        [X{thisdate+1},bounds(thisdate+1)] = LinearizeTrajectory(x_adj_cm,y_adj_cm,mazetype);
         
         %Get linearized place fields. 
         load(fullfile(thispath,'ProcOut.mat'),'FT');
-        [ltrials(thisdate+1),rtrials(thisdate+1)] = LinearizedPFs(X{thisdate+1},FT); 
+        [ltrials(thisdate+1),rtrials(thisdate+1),goalbins(thisdate+1)] = LinearizedPFs(X{thisdate+1},FT,bounds(thisdate+1)); 
         
         %Get the neuron IDs corresponding to the same neurons in the base
         %session.
@@ -143,20 +144,42 @@ function lsortedrates = multi_LinearizedPFs(regfilepath,basedate,dates)
         dates{i}(dates{i}=='_') = '-';
     end
     
+    %Number of active neurons in the base session. 
+    LNumNeurons = size(lsortedrates{1},1); 
+    RNumNeurons = size(rsortedrates{1},1); 
+    
     figure;
     subplot(2,numdates+1,1);
         imagesc(lsortedrates{1}); colormap(gray);   %Left trials.
+        line([goalbins(1).l(1),goalbins(1).l(1),goalbins(1).l(2),goalbins(1).l(2)],...
+            [0,LNumNeurons,LNumNeurons,0],...
+            'color','r','linewidth',2);
         title(basedate);
     subplot(2,numdates+1,numdates+2); 
         imagesc(rsortedrates{1}); colormap(gray);   %Right trials. 
+        line([goalbins(1).r(1),goalbins(1).r(1),goalbins(1).r(2),goalbins(1).r(2)],...
+            [0,RNumNeurons,RNumNeurons,0],...
+            'color','r','linewidth',2);
+
         
     for thisplot = 2:numdates+1
         subplot(2,numdates+1,thisplot);
             imagesc(lsortedrates{thisplot}); colormap(gray);
             title(dates{thisplot-1});
+            line([goalbins(thisplot).l(1),goalbins(thisplot).l(1),...
+                goalbins(thisplot).l(2),goalbins(thisplot).l(2)],...
+                [0,LNumNeurons,LNumNeurons,0],...
+            'color','r','linewidth',2);
         subplot(2,numdates+1,thisplot+numdates+1);
             imagesc(rsortedrates{thisplot}); colormap(gray); 
+            line([goalbins(thisplot).r(1),goalbins(thisplot).r(1),...
+                goalbins(thisplot).r(2),goalbins(thisplot).r(2)],...
+                [0,RNumNeurons,RNumNeurons,0],...
+                'color','r','linewidth',2);
     end
+    
+    %Compile. 
+    sortedrates = {lsortedrates{:}; rsortedrates{:}}; 
     
     %Return to directory. 
     cd(currentdir); 
