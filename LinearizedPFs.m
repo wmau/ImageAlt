@@ -1,4 +1,4 @@
-function [normalizedrate,order,inactive] = LinearizedPFs(X,FT)
+function [lefttrials,righttrials] = LinearizedPFs(X,FT)
 %normalizedrate = LinearizedPFs(X,FT)
 %   
 %   Find place fields in linearized space on the alternation Tmaze. 
@@ -33,44 +33,64 @@ function [normalizedrate,order,inactive] = LinearizedPFs(X,FT)
     
     FT = logical(FT);               %Convert to logical array.
     isrunning = speed > minspeed;   %Speed threshold. 
-
+    
+    %Separate left and right trials. 
+    load(fullfile(pwd,'Alternation.mat')); 
+    left = Alt.choice == 1;
+    right = Alt.choice == 2; 
+    
 %% Create heatmap.
     %Spatial bins.
     nbins = 100; 
     
     %Occupancy histogram.
-    [occ,occ_bins] = hist(X,nbins); 
+    occ = hist(X,nbins); 
     
     %Preallocate.
-    rate = nan(nneurons,nbins); 
+    lrate = nan(nneurons,nbins); 
+    rrate = nan(nneurons,nbins); 
     
     %Bin locations where each neuron spiked then divide by the occupancy
     %map.
     for this_neuron = 1:nneurons
-        spks = X(FT(this_neuron,isrunning));
-        spkpos = hist(spks,nbins);
-        rate(this_neuron,:) = spkpos ./ occ; 
+        lspkpos = X(FT(this_neuron,isrunning & left));
+        rspkpos = X(FT(this_neuron,isrunning & right)); 
+        
+        lbinned = hist(lspkpos,nbins);
+        rbinned = hist(rspkpos,nbins); 
+        
+        lrate(this_neuron,:) = lbinned ./ occ; 
+        rrate(this_neuron,:) = rbinned ./ occ;
     end
 
     %Find peak firing rate. 
-    [peak,inds] = max(rate,[],2);
-    inactive = peak==0;
+    [lpeak,linds] = max(lrate,[],2);
+    [rpeak,rinds] = max(rrate,[],2); 
+    linactive = lpeak==0; rinactive = rpeak == 0; 
 %     rate(inactive,:) = []; %Delete neurons that don't fire. 
 %     inds(inactive) = []; peak(inactive) = []; 
     
     %Normalize responses for all neurons such that 1 is the max rate. 
-    normalizedrate = bsxfun(@rdivide,rate,peak);
+    lnormalizedrate = bsxfun(@rdivide,lrate,lpeak);
+    rnormalizedrate = bsxfun(@rdivide,rrate,rpeak); 
     
     %Smooth. 
     sm = fspecial('gaussian');
-    parfor this_neuron = 1:size(normalizedrate,1)
-        normalizedrate(this_neuron,:) = imfilter(normalizedrate(this_neuron,:),sm);
+    parfor this_neuron = 1:size(lnormalizedrate,1)
+        lnormalizedrate(this_neuron,:) = imfilter(lnormalizedrate(this_neuron,:),sm);
+        rnormalizedrate(this_neuron,:) = imfilter(rnormalizedrate(this_neuron,:),sm); 
     end
     
     %Sort according to position where peak firing rate occurred. 
-    [~,order] = sort(inds);
-    inactive = inactive(order);
-    normalizedrate = normalizedrate(order,:);
+    [~,lorder] = sort(linds);                       [~,rorder] = sort(rinds);
+    linactive = linactive(lorder);                  rinactive = rinactive(rorder); 
+    lnormalizedrate = lnormalizedrate(lorder,:);    rnormalizedrate = rnormalizedrate(rorder,:); 
+    
+    %Compile. 
+    lefttrials.rate = lnormalizedrate;  righttrials.rate = rnormalizedrate; 
+    lefttrials.inactive = linactive;    righttrials.inactive = rinactive; 
+    lefttrials.order = lorder;          righttrials.order = rorder;
+    
     
 end
     

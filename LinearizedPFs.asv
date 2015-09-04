@@ -1,19 +1,27 @@
-function normalizedrate = LinearizedPFs(X,FT)
+function [lefttrials,righttrials] = LinearizedPFs(X,FT)
 %normalizedrate = LinearizedPFs(X,FT)
 %   
 %   Find place fields in linearized space on the alternation Tmaze. 
 %
-%   INPUTS:
+%   INPUTS
 %       X: Linearized position vector from LinearizeTrajectory().
 %
 %       FT: Binary NxT matrix (N=number of neurons, T=number of frames)
 %       specifying when calcium transients occurred. From ProcOut out of
 %       TENASPIS. 
 %
-%   OUTPUT: 
-%       normalizedrate: NxB matrix (N=number of neurons that fired,
-%       B=number of spatial bins) containing occupancy-normalized transient
-%       rates. Each row (neurno
+%   OUTPUTS
+%       normalizedrate: NxB matrix (N=number of neurons, B=number of
+%       spatial bins) containing occupancy-normalized, speed-thresholded
+%       transient rates. Each row (neuron) is normalized to the max firing
+%       rate of that row. Rows are sorted according to where the max firing
+%       rate occurred on the maze.
+%
+%       order: Vector specifying the pre-sorted indices of normalizedrate.
+%
+%       inactive: Vector containing 1s if the neuron did not fire, 0s if it
+%       did. 
+%
 
 %% Align imaging to tracking. 
     Pix2Cm = 0.15;                  %Scaling factor.
@@ -25,42 +33,64 @@ function normalizedrate = LinearizedPFs(X,FT)
     
     FT = logical(FT);               %Convert to logical array.
     isrunning = speed > minspeed;   %Speed threshold. 
-
+    
+    %Separate left and right trials. 
+    load(fullfile(pwd,'Alternation.mat')); 
+    left = Alt.choice == 1;
+    right = Alt.choice == 2; 
+    
 %% Create heatmap.
     %Spatial bins.
     nbins = 100; 
     
     %Occupancy histogram.
-    [occ,occ_bins] = hist(X,nbins); 
+    occ = hist(X,nbins); 
     
     %Preallocate.
-    normalizedrate = nan(nneurons,nbins); 
+    lrate = nan(nneurons,nbins); 
+    rrate = 
     
     %Bin locations where each neuron spiked then divide by the occupancy
     %map.
     for this_neuron = 1:nneurons
-        spks = X(FT(this_neuron,isrunning));
-        spkpos = hist(spks,nbins);
-        normalizedrate(this_neuron,:) = spkpos ./ occ; 
+        lspkpos = X(FT(this_neuron,isrunning & left));
+        rspkpos = X(FT(this_neuron,isrunning & right)); 
+        
+        lbinned = hist(lspkpos,nbins);
+        rbinned = hist(rspkpos,nbins); 
+        
+        lrate(this_neuron,:) = lbinned ./ occ; 
+        rrate(this_neuron,:) = rbinned ./ occ;
     end
 
     %Find peak firing rate. 
-    [peak,inds] = max(normalizedrate,[],2);
-    normalizedrate(peak==0,:) = []; %Delete neurons that don't fire. 
-    inds(peak==0) = []; peak(peak==0) = []; 
+    [lpeak,linds] = max(lrate,[],2);
+    [rpeak,rinds] = max(rrate,[],2); 
+    linactive = lpeak==0; rinactive = rpeak == 0; 
+%     rate(inactive,:) = []; %Delete neurons that don't fire. 
+%     inds(inactive) = []; peak(inactive) = []; 
     
     %Normalize responses for all neurons such that 1 is the max rate. 
-    normalizedrate = bsxfun(@rdivide,normalizedrate,peak);
+    lnormalizedrate = bsxfun(@rdivide,lrate,lpeak);
+    rnormalizedrate = bsxfun(@rdivide,rrate,rpeak); 
     
     %Smooth. 
     sm = fspecial('gaussian');
-    parfor this_neuron = 1:size(normalizedrate,1)
-        normalizedrate(this_neuron,:) = imfilter(normalizedrate(this_neuron,:),sm);
+    parfor this_neuron = 1:size(lnormalizedrate,1)
+        lnormalizedrate(this_neuron,:) = imfilter(lnormalizedrate(this_neuron,:),sm);
+        rnormalizedrate(this_neuron,:) = imfilter(rnormalizedrate(this_neuron,:),sm); 
     end
     
     %Sort according to position where peak firing rate occurred. 
-    [~,sorted] = sort(inds);
-    normalizedrate = normalizedrate(sorted,:);
+    [~,lorder] = sort(linds);                       [~,rorder] = sort(rinds);
+    linactive = linactive(lorder);                  rinactive = rinactive(rorder); 
+    lnormalizedrate = lnormalizedrate(lorder,:);    rnormalizedrate = rnormalizedrate(rorder,:); 
+    
+    %Combine everything. 
+    lefttrials.rate = lnormalizedrate;  righttrials.rate = rnormalizedrate; 
+    lefttrials.inactive = linactive;    righttrials.inactive = rinactive; 
+    lefttrials.order = lorder;          righttrials.order = rorder;
+    
     
 end
     
