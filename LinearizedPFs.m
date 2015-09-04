@@ -11,17 +11,7 @@ function [lefttrials,righttrials] = LinearizedPFs(X,FT)
 %       TENASPIS. 
 %
 %   OUTPUTS
-%       normalizedrate: NxB matrix (N=number of neurons, B=number of
-%       spatial bins) containing occupancy-normalized, speed-thresholded
-%       transient rates. Each row (neuron) is normalized to the max firing
-%       rate of that row. Rows are sorted according to where the max firing
-%       rate occurred on the maze.
-%
-%       order: Vector specifying the pre-sorted indices of normalizedrate.
-%
-%       inactive: Vector containing 1s if the neuron did not fire, 0s if it
-%       did. 
-%
+
 
 %% Align imaging to tracking. 
     Pix2Cm = 0.15;                  %Scaling factor.

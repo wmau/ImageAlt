@@ -1,4 +1,4 @@
-function sortedrates = multi_LinearizedPFs(regfilepath,basedate,dates)
+function lsortedrates = multi_LinearizedPFs(regfilepath,basedate,dates)
 %sortedrates = multi_LinearizedPFs(regfilepath,basedate,dates)
 %   
 %   Plots heatmaps for linearized place fields across multiple sessions.
@@ -41,18 +41,21 @@ function sortedrates = multi_LinearizedPFs(regfilepath,basedate,dates)
 
     %Get linearized place fields. 
     load(fullfile(basepath,'ProcOut.mat'),'FT'); 
-    rates = cell(1,numdates+1);                 %Preallocate. 
-    [rates{1},order,inactive] = LinearizedPFs(X{1},FT); 
-    numneurons = size(rates{1},1);              %Total number of detected neurons.
-    numinactive = sum(inactive);                %Number of inactive neurons.
-    numactive = numneurons - numinactive;       %Number of active neurons. 
+
+    [ltrials(1),rtrials(1)] = LinearizedPFs(X{1},FT); 
+    numneurons = size(ltrials(1).rate,1);           %Total number of detected neurons.
+    numinactive.l = sum(ltrials.inactive);          %Number of inactive neurons.
+    numinactive.r = sum(rtrials.inactive);          
+    numactive.l = numneurons - numinactive.l;       %Number of active neurons. 
+    numactive.r = numneurons - numinactive.r; 
     
     %Delete inactive neurons.
-    rates{1}(inactive,:) = []; 
-    order(inactive) = [];
+    ltrials(1).rate(ltrials(1).inactive,:) = [];    rtrials(1).rate(rtrials(1).inactive,:) = [];
+    ltrials(1).order(ltrials(1).inactive) = [];     rtrials(1).order(rtrials(1).inactive) = []; 
     
     %Preallocate.
-    sortedrates = rates;
+    lsortedrates{1} = ltrials(1).rate;
+    rsortedrates{1} = rtrials(1).rate; 
 
 %% Load the registered neuron profiles. 
     load(fullfile(regfilepath,'Reg_NeuronIDs_updatemasks0.mat')); 
@@ -78,9 +81,13 @@ function sortedrates = multi_LinearizedPFs(regfilepath,basedate,dates)
     
 %% Plot linearized place fields for the other sessions. 
     %Get the rows containing the neurons in sorted order. 
-    [~,idx] = ismember(order,map(:,baseind));
+    [~,lidx] = ismember(ltrials.order,map(:,baseind));
+    [~,ridx] = ismember(rtrials.order,map(:,baseind)); 
     
-    neuronid = nan(numactive,numdates); 
+    %Preallocate. 
+    lneuronid = nan(numactive.l,numdates); 
+    rneuronid = nan(numactive.r,numdates);  
+    
     for thisdate = 1:numdates
         disp(['Processing ',dates{thisdate},'...']);
         
@@ -94,12 +101,13 @@ function sortedrates = multi_LinearizedPFs(regfilepath,basedate,dates)
         
         %Get linearized place fields. 
         load(fullfile(thispath,'ProcOut.mat'),'FT');
-        rates{thisdate+1} = LinearizedPFs(X{thisdate+1},FT); 
+        [ltrials(thisdate+1),rtrials(thisdate+1)] = LinearizedPFs(X{thisdate+1},FT); 
         
         %Get the neuron IDs corresponding to the same neurons in the base
         %session.
         sessionnumber = dateinds(thisdate);
-        neuronid(:,thisdate) = map(idx,sessionnumber); 
+        lneuronid(:,thisdate) = map(lidx,sessionnumber); 
+        rneuronid(:,thisdate) = map(ridx,sessionnumber); 
         
         %Okay, now neuronid is a NxD matrix (N=number of active neurons in
         %session 1, D=number of dates you're comparing the base session
@@ -111,15 +119,21 @@ function sortedrates = multi_LinearizedPFs(regfilepath,basedate,dates)
    
     %Get all the indices where neurons in the base session appear in later
     %sessions.
-    good = ~isnan(neuronid);
+    lgood = ~isnan(lneuronid);
+    rgood = ~isnan(rneuronid); 
 
     %Sort the rest of the sessions using the same order as the base
     %session.
+    
     for thisdate = 1:numdates
-        sortedids = neuronid(good(:,thisdate),thisdate);
+        lsortedids = lneuronid(lgood(:,thisdate),thisdate);
+        rsortedids = rneuronid(rgood(:,thisdate),thisdate); 
         
-        sortedrates{thisdate+1}(good(:,thisdate),:) = rates{thisdate+1}(sortedids,:);
-        sortedrates{thisdate+1}(~good(:,thisdate),:) = nan;
+        lsortedrates{thisdate+1}(lgood(:,thisdate),:) = ltrials(thisdate+1).rate(lsortedids,:);
+        lsortedrates{thisdate+1}(~lgood(:,thisdate),:) = nan;
+        
+        rsortedrates{thisdate+1}(rgood(:,thisdate),:) = rtrials(thisdate+1).rate(rsortedids,:);
+        rsortedrates{thisdate+1}(~rgood(:,thisdate),:) = nan; 
     end
   
 %% Plot.
@@ -130,13 +144,18 @@ function sortedrates = multi_LinearizedPFs(regfilepath,basedate,dates)
     end
     
     figure;
-    subplot(1,numdates+1,1);
-        imagesc(sortedrates{1}); colormap(gray);
+    subplot(2,numdates+1,1);
+        imagesc(lsortedrates{1}); colormap(gray);   %Left trials.
         title(basedate);
+    subplot(2,numdates+1,numdates+2); 
+        imagesc(rsortedrates{1}); colormap(gray);   %Right trials. 
+        
     for thisplot = 2:numdates+1
-        subplot(1,numdates+1,thisplot);
-            imagesc(sortedrates{thisplot}); colormap(gray);
+        subplot(2,numdates+1,thisplot);
+            imagesc(lsortedrates{thisplot}); colormap(gray);
             title(dates{thisplot-1});
+        subplot(2,numdates+1,thisplot+numdates+1);
+            imagesc(rsortedrates{thisplot}); colormap(gray); 
     end
     
     %Return to directory. 
