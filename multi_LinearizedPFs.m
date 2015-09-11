@@ -36,16 +36,16 @@ function sortedrates = multi_LinearizedPFs(regfilepath,basedate,dates)
     cd(basepath);                               %Necessary because sections() loads from pwd.
     load(fullfile(basepath,'Pos_align.mat'),'x_adj_cm','y_adj_cm');
     X = cell(1,numdates+1); 
-    [X{1},bounds] = LinearizeTrajectory(x_adj_cm,y_adj_cm,mazetype);
+    X{1} = LinearizeTrajectory(x_adj_cm,y_adj_cm,mazetype);
 
     %Get linearized place fields. 
     load(fullfile(basepath,'ProcOut.mat'),'FT'); 
 
-    [ltrials,rtrials,goalbins] = LinearizedPFs(X{1},FT,bounds); 
-    LNumNeurons = size(ltrials(1).rate,1);           %Total number of detected neurons.
-    numinactive.l = sum(ltrials.inactive);          %Number of inactive neurons.
+    [ltrials,rtrials,goalbins] = LinearizedPFs(X{1},FT); 
+    LNumNeurons = size(ltrials(1).rate,1);              %Total number of detected neurons.
+    numinactive.l = sum(ltrials.inactive);              %Number of inactive neurons.
     numinactive.r = sum(rtrials.inactive);          
-    numactive.l = LNumNeurons - numinactive.l;       %Number of active neurons. 
+    numactive.l = LNumNeurons - numinactive.l;       	%Number of active neurons. 
     numactive.r = LNumNeurons - numinactive.r; 
     
     %Delete inactive neurons.
@@ -98,11 +98,11 @@ function sortedrates = multi_LinearizedPFs(regfilepath,basedate,dates)
         %Linearize trajectory. 
         cd(thispath);
         load(fullfile(thispath,'Pos_align.mat'),'x_adj_cm','y_adj_cm'); 
-        [X{thisdate+1},bounds(thisdate+1)] = LinearizeTrajectory(x_adj_cm,y_adj_cm,mazetype);
+        X{thisdate+1} = LinearizeTrajectory(x_adj_cm,y_adj_cm,mazetype);
         
         %Get linearized place fields. 
         load(fullfile(thispath,'ProcOut.mat'),'FT');
-        [ltrials(thisdate+1),rtrials(thisdate+1),goalbins(thisdate+1)] = LinearizedPFs(X{thisdate+1},FT,bounds(thisdate+1)); 
+        [ltrials(thisdate+1),rtrials(thisdate+1),goalbins(thisdate+1)] = LinearizedPFs(X{thisdate+1},FT); 
         
         %Get the neuron IDs corresponding to the same neurons in the base
         %session.
@@ -125,7 +125,6 @@ function sortedrates = multi_LinearizedPFs(regfilepath,basedate,dates)
 
     %Sort the rest of the sessions using the same order as the base
     %session.
-    
     for thisdate = 1:numdates
         lsortedids = lneuronid(lgood(:,thisdate),thisdate);
         rsortedids = rneuronid(rgood(:,thisdate),thisdate); 

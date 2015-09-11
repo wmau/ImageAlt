@@ -1,4 +1,4 @@
-function [X,bounds] = LinearizeTrajectory(x,y,mazetype)
+function X = LinearizeTrajectory(x,y,mazetype)
 %X = LinearizeTrajectory(x,y,mazetype)
 %
 %   Takes X and Y coordinates from aligned Cinexplex data (output of
@@ -40,9 +40,7 @@ function [X,bounds] = LinearizeTrajectory(x,y,mazetype)
                 Alt = postrials(x,y,0,'skip_rot_check',1);
             end
             onstem = Alt.section==2;        %Logical. 
-            atleftgoal = find(Alt.goal==1); %Index number.
-            atrightgoal = find(Alt.goal==2); 
-            
+        
             %Get the extreme radii on the stem. 
             cosang = cos(angs);
             behind = onstem & cosang>0;
@@ -83,7 +81,13 @@ function [X,bounds] = LinearizeTrajectory(x,y,mazetype)
             
             %Create radian-ordered cumulative distance look-up table.
             cumdist(leftside) = leftdist; 
-            cumdist(rightside) = flip(rightdist);   %Right turns go in reverse order. 
+            cumdist(rightside) = flip(rightdist);   %Right turns go in reverse order.
+            
+            %BELOW COMMENTED CODE IS A HACK. For some reason, cumulative
+            %distance on left arm is shorter than right arm. Perhaps due to
+            %camera angle. 
+            %cumdist(rightside) = flip(leftdist);
+            
             %When using radian-ordered look-up table, distance must be at least stem length.
             cumdist = cumdist + stemlength;         
             
@@ -97,8 +101,6 @@ function [X,bounds] = LinearizeTrajectory(x,y,mazetype)
             X(X(onstem)<0) = 0;                     %Distance can't be less than 0.
             X(X(onstem)>stemlength) = stemlength;   %Distance on stem can't be longer than length of stem. 
             
-            bounds.leftgoal = [min(X(atleftgoal)) max(X(atleftgoal))]; 
-            bounds.rightgoal = [min(X(atrightgoal)) max(X(atrightgoal))]; 
         %To do.
         case 'loop'
             disp('Loop code not finished yet!'); 

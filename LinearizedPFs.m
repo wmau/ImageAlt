@@ -1,4 +1,4 @@
-function [lefttrials,righttrials,goalbins] = LinearizedPFs(X,FT,bounds)
+function [lefttrials,righttrials,goalbins] = LinearizedPFs(X,FT)
 %normalizedrate = LinearizedPFs(X,FT)
 %   
 %   Find place fields in linearized space on the alternation Tmaze. 
@@ -35,7 +35,7 @@ function [lefttrials,righttrials,goalbins] = LinearizedPFs(X,FT,bounds)
     nneurons = size(FT,1); 
     
     %Align. 
-    [~,~,speed,FT,~,~] = AlignImagingToTracking(Pix2Cm,FT);
+    [~,~,speed,FT,~,~] = AlignImagingToTracking_WM2(Pix2Cm,FT);
     
     FT = logical(FT);               %Convert to logical array.
     isrunning = speed > minspeed;   %Speed threshold. 
@@ -57,8 +57,8 @@ function [lefttrials,righttrials,goalbins] = LinearizedPFs(X,FT,bounds)
     %Get bins corresponding to the reward location. 
     binnedleftgoal = histcounts(X(atleftgoal),edges);
     binnedrightgoal = histcounts(X(atrightgoal),edges); 
-    goalbins.l = [find(binnedleftgoal,1,'first'),find(binnedleftgoal,1,'last')];  
-    goalbins.r = [find(binnedrightgoal,1,'first'),find(binnedrightgoal,1,'last')];  
+    goalbins.l = [find(binnedleftgoal>10,1,'first'),find(binnedleftgoal>10,1,'last')];  
+    goalbins.r = [find(binnedrightgoal>10,1,'first'),find(binnedrightgoal>10,1,'last')];  
     
     %Preallocate.
     lrate = nan(nneurons,nbins); 
