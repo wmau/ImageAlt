@@ -1,5 +1,5 @@
 function [lefttrials,righttrials,goalbins] = LinearizedPFs(X,FT)
-%normalizedrate = LinearizedPFs(X,FT)
+%[lefttrials,righttrials,goalbins] = LinearizedPFs(X,FT)
 %   
 %   Find place fields in linearized space on the alternation Tmaze. 
 %
