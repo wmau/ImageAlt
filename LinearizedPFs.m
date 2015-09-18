@@ -49,7 +49,7 @@ function [lefttrials,righttrials,goalbins] = LinearizedPFs(X,FT)
     
 %% Create heatmap.
     %Spatial bins.
-    nbins = 100; 
+    nbins = 80; 
     
     %Occupancy histogram.
     [occ,edges] = histcounts(X,nbins); 

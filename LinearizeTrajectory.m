@@ -18,20 +18,11 @@ function X = LinearizeTrajectory(x,y,mazetype)
 %
 
 
-%%
-    nbins = 100;
-
+%%  
+    nbins = 80;
+    
     switch mazetype
         case 'tmaze'
-            %Get the boundaries, centroid, and length of the stem. 
-            bounds = sections(x,y,1); 
-            centroidx = mean(unique(bounds.center.x));
-            centroidy = mean(unique(bounds.center.y));
-            stemlength = bounds.center.x(2) - bounds.center.x(1); 
-            %Convert from Cartesian coordinates to polar coordinates. 
-            [angs,radii] = cart2pol(x-centroidx, y-centroidy); 
-            angs = mod(angs,2*pi); 
-           
             %Get timestamps for left and right trials and when mouse is on
             %stem or at the goal location. 
             try 
@@ -40,7 +31,22 @@ function X = LinearizeTrajectory(x,y,mazetype)
                 Alt = postrials(x,y,0,'skip_rot_check',1);
             end
             onstem = Alt.section==2;        %Logical. 
-        
+             
+            %Get the centroid and length of the stem. 
+            centroidx = mean(x(onstem));
+            centroidy = mean(y(onstem));
+            stemlength = max(x(onstem)) - min(x(onstem)); 
+            
+            %Convert from Cartesian coordinates to polar coordinates. 
+            [angs,radii] = cart2pol(x-centroidx, y-centroidy); 
+            
+            %Orient the stem so that its angle is 0.
+            dblangs = 2*angs;
+            dblangs = mod(dblangs,2*pi);
+            avgang = circ_mean(dblangs'); 
+            angs = angs - avgang;      
+            angs = mod(angs,2*pi); 
+             
             %Get the extreme radii on the stem. 
             cosang = cos(angs);
             behind = onstem & cosang>0;
@@ -53,7 +59,7 @@ function X = LinearizeTrajectory(x,y,mazetype)
             angdef=(pi/nbins:2*pi/nbins:2*pi)';
             sparseang = [angs(~onstem)'; 0; pi];
             sparserad = [radii(~onstem)'; maxback; maxfront]; 
-            [~,angidx] = histc(sparseang,linspace(0,2*pi,nbins));
+            [~,angidx] = histc(sparseang,0:2*pi/nbins:2*pi);
             meanrad = accumarray(angidx,sparserad,[nbins,1],@mean);
             mazedef = [meanrad((round(nbins/2)+1):nbins); meanrad; ...
                 meanrad(1:round(nbins/2))]; 
@@ -105,5 +111,5 @@ function X = LinearizeTrajectory(x,y,mazetype)
         case 'loop'
             disp('Loop code not finished yet!'); 
     end
-    
+        
 end

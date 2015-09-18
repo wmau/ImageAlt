@@ -32,7 +32,7 @@ function [splitters,active] = splitterByLaps(x,y,FT)
     %Find indices for when the mouse is on the stem and for left/right
     %trials. 
     load(fullfile(pwd,'Alternation.mat')); 
-    onstem = Alt.section == 2 & Alt.alt == 1;   %Logicals. On stem and correct.   
+    onstem = Alt.section == 2; %& Alt.alt == 1;   %Logicals. On stem and correct.   
     numTrials = max(Alt.trial); 
     leftTrials = sum(Alt.summary(:,2)==1);      %Number of left or right trials. 
     rightTrials = sum(Alt.summary(:,2)==2); 
