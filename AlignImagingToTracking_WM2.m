@@ -1,4 +1,4 @@
-function [x,y,speed,FT,FToffset,FToffsetRear,aviFrame] = AlignImagingToTracking_WM2(Pix2Cm,FT)
+function [x,y,speed,FT,FToffset,FToffsetRear] = AlignImagingToTracking_WM2(Pix2Cm,FT)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 SR = 20;

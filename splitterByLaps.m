@@ -21,8 +21,7 @@ function [splitters,active] = splitterByLaps(x,y,FT)
 %% Linearize the trajectory and find bins in the center stem.   
     numNeurons = size(FT,1); 
     Pix2Cm = 0.15; 
-    nbins = 100; 
-    [~,~,~,FT] = AlignImagingToTracking_WM2(Pix2Cm,FT);
+    nbins = 80; 
     FT = logical(FT); 
     
     %Linearize trajectory. 
@@ -32,7 +31,7 @@ function [splitters,active] = splitterByLaps(x,y,FT)
     %Find indices for when the mouse is on the stem and for left/right
     %trials. 
     load(fullfile(pwd,'Alternation.mat')); 
-    onstem = Alt.section == 2; %& Alt.alt == 1;   %Logicals. On stem and correct.   
+    onstem = Alt.section == 2 & Alt.alt == 1;   %Logicals. On stem and correct.   
     numTrials = max(Alt.trial); 
     leftTrials = sum(Alt.summary(:,2)==1);      %Number of left or right trials. 
     rightTrials = sum(Alt.summary(:,2)==2); 
@@ -78,5 +77,7 @@ function [splitters,active] = splitterByLaps(x,y,FT)
     active = cellfun(@find,splitters,'unif',0); 
     active = ~cellfun(@isempty,active); 
     active = find(any(active,2));
+    
+    save('splitters.mat','splitters','active'); 
     
 end
