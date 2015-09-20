@@ -20,7 +20,6 @@ function [splitters,active] = splitterByLaps(x,y,FT)
 
 %% Linearize the trajectory and find bins in the center stem.   
     numNeurons = size(FT,1); 
-    Pix2Cm = 0.15; 
     nbins = 80; 
     FT = logical(FT); 
     
@@ -39,6 +38,7 @@ function [splitters,active] = splitterByLaps(x,y,FT)
     %Occupancy histogram.
     [~,edges] = histcounts(X,nbins); 
     stemOcc = histcounts(X(onstem),edges); 
+    %Bin numbers for the center stem.
     stemBins = find(stemOcc,1,'first'):find(stemOcc,1,'last'); 
    
     %Preallocate. 
