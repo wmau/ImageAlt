@@ -36,7 +36,7 @@ function MultiPFPlotAcrossDays(regfilepath,dates)
 %% Loop through recording sessions and extract data. 
     for thisDate = 1:numDates
         cd(paths{thisDate}); 
-        disp(['Extracting data from ', dates{thisDate}, '...']); 
+        disp(['Extracting data from  ', dates{thisDate}, '...']); 
         
         %% Get neuron masks.
         load('ProcOut.mat','FT','NeuronImage'); 
@@ -109,13 +109,9 @@ function MultiPFPlotAcrossDays(regfilepath,dates)
             %Place field. 
             subplot(numDates,4,ind+rowInc+1);
             imagesc(data(thisDate).left.PFs{thisNeuron});
-            if ~isnan(data(thisDate).left.IDlist(thisNeuron))
-                title(num2str(data(thisDate).left.IDlist(thisNeuron)));
-            end
             
             %Linearized PF plot with highlighted neuron. 
             goodneurons = any(~isnan(lefttrials{thisDate}.rate),2); 
-            goodinds = find(goodneurons); 
             subplot(numDates,4,ind+rowInc+2);
             imagesc(lefttrials{thisDate}.rate(goodneurons,:)); 
             hold on;
@@ -123,13 +119,11 @@ function MultiPFPlotAcrossDays(regfilepath,dates)
             %Get the neuron ID for this neuron on this date.    
             LID = data(thisDate).left.IDlist(thisNeuron);
             try 
-                Lind = find(goodinds==LID); 
+                Lind = find(lefttrials{thisDate}.order==LID); 
                 line([1,nbins,nbins,1,1],...
                     [Lind-0.5,Lind-0.5,Lind+0.5,Lind+0.5,Lind-0.5],'Color','r');  
-                title(['Index ', num2str(Lind)]); 
             catch
             end
-            hold off; 
             
             %Right trials. 
             figure(51); 
@@ -141,27 +135,20 @@ function MultiPFPlotAcrossDays(regfilepath,dates)
             %Place field. 
             subplot(numDates,4,ind+rowInc+1);
             imagesc(data(thisDate).right.PFs{thisNeuron});
-            if ~isnan(data(thisDate).right.IDlist(thisNeuron))
-                title(num2str(data(thisDate).right.IDlist(thisNeuron)));
-            end
             
             %Linearized PF plot with highlighted neuron. 
             goodneurons = any(~isnan(righttrials{thisDate}.rate),2); 
-            goodinds = find(goodneurons); 
             subplot(numDates,4,ind+rowInc+2);
             imagesc(righttrials{thisDate}.rate(goodneurons,:));  
-            hold on;
-
+            
             %Get the neuron ID for this neuron on this date.    
             RID = data(thisDate).right.IDlist(thisNeuron); 
             try
-                Rind = find(goodinds==RID); 
+                Rind = find(righttrials{thisDate}.order==RID); 
                 line([1,nbins,nbins,1,1],...
                     [Rind-0.5,Rind-0.5,Rind+0.5,Rind+0.5,Rind-0.5],'Color','r');  
-                title(['Index ', num2str(Rind)]); 
             catch  
             end
-            hold off; 
             
             rowInc = rowInc + 4; 
         end
