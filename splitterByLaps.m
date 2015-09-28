@@ -30,8 +30,10 @@ function [splitters,active] = splitterByLaps(x,y,FT)
     %Find indices for when the mouse is on the stem and for left/right
     %trials. 
     load(fullfile(pwd,'Alternation.mat')); 
-    onstem = Alt.section == 2 & Alt.alt == 1;   %Logicals. On stem and correct.   
-    numTrials = max(Alt.trial); 
+    onstem = Alt.section == 2; 
+    correct =  Alt.alt == 1;    
+    correctTrials = unique(Alt.trial(correct));
+    numTrials = length(correctTrials); 
     leftTrials = sum(Alt.summary(:,2)==1);      %Number of left or right trials. 
     rightTrials = sum(Alt.summary(:,2)==2); 
     
@@ -54,15 +56,16 @@ function [splitters,active] = splitterByLaps(x,y,FT)
         rightTrialCounter = 1; 
 
         for thisTrial = 1:numTrials
+            trialNum = correctTrials(thisTrial); 
             %Bin the positions when thisNeuron fired on thisTrial on the
             %stem. 
-            spkhist = histcounts(X(FT(thisNeuron,onstem & Alt.trial == thisTrial)),edges); 
+            spkhist = histcounts(X(FT(thisNeuron,:) & onstem & Alt.trial==trialNum),edges); 
             
             %Separate left vs right trials. 
-            if unique(Alt.choice(Alt.trial == thisTrial)) == 1
+            if unique(Alt.choice(Alt.trial == trialNum)) == 1
                 splitters{thisNeuron,1}(leftTrialCounter,:) = spkhist(stemBins);
                 leftTrialCounter = leftTrialCounter + 1; 
-            elseif unique(Alt.choice(Alt.trial == thisTrial)) == 2
+            elseif unique(Alt.choice(Alt.trial == trialNum)) == 2
                 splitters{thisNeuron,2}(rightTrialCounter,:) = spkhist(stemBins); 
                 rightTrialCounter = rightTrialCounter + 1; 
             end
