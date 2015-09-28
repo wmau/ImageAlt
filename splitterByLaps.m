@@ -81,6 +81,6 @@ function [splitters,active] = splitterByLaps(x,y,FT)
     active = ~cellfun(@isempty,active); 
     active = find(any(active,2));
     
-    save('splitters.mat','splitters','active'); 
+    save('splittersByLap.mat','splitters','active'); 
     
 end

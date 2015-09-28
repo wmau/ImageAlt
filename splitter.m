@@ -1,4 +1,4 @@
-function [splitters,trialtype] = splitter(x,y,FT)
+function [splitters,trialtype,active] = splitter(x,y,FT)
 %splitter(x,y,FT)
 %
 %
@@ -26,7 +26,7 @@ function [splitters,trialtype] = splitter(x,y,FT)
     stemOcc = histcounts(X(onstem),edges); 
     %Bin numbers for the center stem.
     stemBins = find(stemOcc,1,'first'):find(stemOcc,1,'last'); 
-   
+    
     %Preallocate. 
     splitters = cell(numNeurons,1);   
     
@@ -50,5 +50,9 @@ function [splitters,trialtype] = splitter(x,y,FT)
     end
     p.stop;
     
-    save('splittersByLap.mat','splitters','trialtype'); 
+    %Get active neurons. 
+    active = cellfun(@find,splitters,'unif',0); 
+    active = find(~cellfun(@isempty,active)); 
+    
+    save('splitters.mat','splitters','trialtype','active'); 
 end
