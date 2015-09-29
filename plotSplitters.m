@@ -1,4 +1,4 @@
-function plotSplitters(splittersByTrialType,tuningcurves,deltacurve,sigcurve,inds)
+function plotSplitters(splittersByTrialType,tuningcurves,deltacurve,sigcurve,inds,neuronID,savepdf)
 %plotSplitters(splitters,active)
 %
 %   Plots splitters lap by lap. 
@@ -68,6 +68,10 @@ function plotSplitters(splittersByTrialType,tuningcurves,deltacurve,sigcurve,ind
             
             xlim([1 length(deltasign)]); 
             xlabel('Stem Bins'); ylabel('Firing Rate'); legend({'Left','Right'}); 
+            
+            if savepdf==1
+                print(fullfile(pwd,['Neuron #',num2str(neuronID(inds(i)))]),'-dpdf');
+            end
             
     end
  %end
