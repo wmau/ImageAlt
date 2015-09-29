@@ -1,4 +1,4 @@
-function [sigcurve,deltacurve,ci,pvalue,tuningcurves,shufdelta] = sigtuningAllCells(x,y,FT)
+function [sigcurve,deltacurve,ci,pvalue,tuningcurves,shufdelta,neuronID] = sigtuningAllCells(x,y,FT)
 %[sigcurve,deltacurve,ci,pvalue,tuningcurves,shufdelta] =
 %sigtuningAllCells(x,y,FT)
 %
@@ -23,8 +23,8 @@ function [sigcurve,deltacurve,ci,pvalue,tuningcurves,shufdelta] = sigtuningAllCe
         [splitters,trialtype,active] = splitter(x,y,FT);
     end
     
-    %Number of neurons. 
-    numNeurons = length(active);
+    numNeurons = length(splitters);         %Number of neurons. 
+    iter = 500;                             %Number of bootstrap iterations. 
      
 %% Perform bootstrapping. 
     %Preallocate. 
@@ -34,6 +34,7 @@ function [sigcurve,deltacurve,ci,pvalue,tuningcurves,shufdelta] = sigtuningAllCe
     pvalue = cell(numNeurons,1);
     tuningcurves = cell(numNeurons,1);
     shufdelta = cell(numNeurons,1);
+    neuronID = zeros(numNeurons,1); 
     
     disp('Bootstrapping cell responses...'); 
     p = ProgressBar(numNeurons); 
@@ -41,10 +42,20 @@ function [sigcurve,deltacurve,ci,pvalue,tuningcurves,shufdelta] = sigtuningAllCe
         
         [sigcurve{thisNeuron},deltacurve{thisNeuron},ci{thisNeuron},...
             pvalue{thisNeuron},tuningcurves{thisNeuron},shufdelta{thisNeuron}] = ...
-            sigtuning(splitters{active(thisNeuron)},trialtype,500); 
+            sigtuning(splitters{thisNeuron},trialtype,iter); 
+        
+        %This is a Nx1 vector (N=number of neurons active on the stem)
+        %containing indices that reference the entire collection of
+        %neurons. It's necessary to keep track of neuron identity. The
+        %reason why we take a subset of the cells is to drastically cut
+        %down on processing time for the bootstrap. 
+        neuronID(thisNeuron) = active(thisNeuron); 
         p.progress;
        
     end
     p.stop;
+    
+    save('sigSplitters.mat','sigcurve','deltacurve','ci','pvalue',...
+        'tuningcurves','shufdelta','neuronID'); 
     
 end

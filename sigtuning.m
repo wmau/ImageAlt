@@ -31,7 +31,7 @@ function [sigcurve,deltacurve,ci,pvalue,tuningcurves,shufdelta] = sigtuning(rate
     tuningcurves=nan(2,size(ratebylap,2));
     for m=1:2
         tuningcurves(m,:)=nanmean(ratebylap(trialtype==m,:));
-        tuningcurves(m,:)=smooth(tuningcurves(m,:),5,'rlowess');
+        %tuningcurves(m,:)=smooth(tuningcurves(m,:),5,'rlowess');
     end
 
     %Subtract left curve from right to see where they differ
@@ -53,7 +53,7 @@ function [sigcurve,deltacurve,ci,pvalue,tuningcurves,shufdelta] = sigtuning(rate
         randcurves=nan(2,size(ratebylap,2));
         for m=1:2
             randcurves(m,:)=nanmean(ratebylap(randtt(:,x)==m,:));
-            randcurves(m,:)=smooth(randcurves(m,:),5,'rlowess'); 
+            %randcurves(m,:)=smooth(randcurves(m,:),5,'rlowess'); 
         end
 
         %Find difference in tuning for shuffled curves

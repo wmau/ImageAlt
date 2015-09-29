@@ -53,6 +53,9 @@ function [splitters,trialtype,active] = splitter(x,y,FT)
     %Get active neurons. 
     active = cellfun(@find,splitters,'unif',0); 
     active = find(~cellfun(@isempty,active)); 
+
+    %Take only the neurons that were active for at least one trial. 
+    splitters = splitters(active); 
     
     save('splitters.mat','splitters','trialtype','active'); 
 end
