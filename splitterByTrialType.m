@@ -1,5 +1,5 @@
-function [splitters,active] = splitterByLaps(x,y,FT)
-%[splitters,active] = splitterByLaps(x,y,FT)
+function [splitters,active] = splitterByTrialType(x,y,FT)
+%[splitters,active] = splitterByTrialType(x,y,FT)
 %
 %   Searches for transients on the stem for left and right trials. You then
 %   have the capability of plotting cells that were active. 
@@ -81,6 +81,9 @@ function [splitters,active] = splitterByLaps(x,y,FT)
     active = ~cellfun(@isempty,active); 
     active = find(any(active,2));
     
-    save('splittersByLap.mat','splitters','active'); 
+    %Take only the neurons that were active for at least one trial.     
+    splittersByTrialType = splitters(active,:); 
+    
+    save('splittersByTrialType.mat','splittersByTrialType','active'); 
     
 end
