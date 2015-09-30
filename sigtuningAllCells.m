@@ -1,4 +1,4 @@
-function [sigcurve,deltacurve,ci,pvalue,tuningcurves,shufdelta] = sigtuningAllCells(x,y,FT)
+function [sigcurve,deltacurve,ci,pvalue,tuningcurves,shufdelta,neuronID] = sigtuningAllCells(x,y,FT)
 %[sigcurve,deltacurve,ci,pvalue,tuningcurves,shufdelta] =
 %sigtuningAllCells(x,y,FT)
 %
@@ -20,11 +20,12 @@ function [sigcurve,deltacurve,ci,pvalue,tuningcurves,shufdelta] = sigtuningAllCe
         load('splitters.mat'); 
     catch
         disp('Obtaining stem responses...'); 
-        [splitters,trialtype,active] = splitter(x,y,FT);
+        [cellResps,splitters,trialtype,active] = splitter(x,y,FT);
     end
     
     %Number of neurons. 
-    numNeurons = length(active);
+    numActiveNeurons = length(active);
+    numNeurons = length(cellResps); 
      
 %% Perform bootstrapping. 
     %Preallocate. 
@@ -37,11 +38,13 @@ function [sigcurve,deltacurve,ci,pvalue,tuningcurves,shufdelta] = sigtuningAllCe
     
     disp('Bootstrapping cell responses...'); 
     p = ProgressBar(numNeurons); 
-    for thisNeuron = 1:numNeurons
+    for thisNeuron = 1:numActiveNeurons
+        thisActiveNeuron = active(thisNeuron);
         
-        [sigcurve{thisNeuron},deltacurve{thisNeuron},ci{thisNeuron},...
-            pvalue{thisNeuron},tuningcurves{thisNeuron},shufdelta{thisNeuron}] = ...
-            sigtuning(splitters{active(thisNeuron)},trialtype,500); 
+        [sigcurve{thisActiveNeuron},deltacurve{thisActiveNeuron},...
+            ci{thisActiveNeuron},pvalue{thisActiveNeuron},...
+            tuningcurves{thisActiveNeuron},shufdelta{thisActiveNeuron}] = ...
+            sigtuning(splitters{active(thisActiveNeuron)},trialtype,500); 
         p.progress;
        
     end

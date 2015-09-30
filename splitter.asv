@@ -1,4 +1,4 @@
-function [cellResps,splitters,trialtype,active] = splitter(x,y,FT)
+function [splitters,trialtype,active] = splitter(x,y,FT)
 %splitter(x,y,FT)
 %
 %
@@ -28,7 +28,7 @@ function [cellResps,splitters,trialtype,active] = splitter(x,y,FT)
     stemBins = find(stemOcc,1,'first'):find(stemOcc,1,'last'); 
     
     %Preallocate. 
-    cellResps = cell(numNeurons,1);   
+    splitters = cell(numNeurons,1);   
     
     %Get rate by lap. 
     p = ProgressBar(numNeurons);
@@ -43,7 +43,7 @@ function [cellResps,splitters,trialtype,active] = splitter(x,y,FT)
             rateHist(isnan(rateHist)) = 0; 
             
             %Deal. 
-            cellResps{thisNeuron}(thisTrial,:) = rateHist; 
+            splitters{thisNeuron}(thisTrial,:) = rateHist; 
         end
         
     p.progress;
@@ -51,9 +51,8 @@ function [cellResps,splitters,trialtype,active] = splitter(x,y,FT)
     p.stop;
     
     %Get active neurons. 
-    active = cellfun(@find,cellResps,'unif',0); 
+    active = cellfun(@find,splitters,'unif',0); 
     active = find(~cellfun(@isempty,active)); 
-    splitters = cellResps(active); 
     
     save('splitters.mat','splitters','cellResps','trialtype','active'); 
 end
