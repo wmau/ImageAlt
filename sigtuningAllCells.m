@@ -23,11 +23,13 @@ function [sigcurve,deltacurve,ci,pvalue,tuningcurves,shufdelta,neuronID] = sigtu
         splitterByTrialType(x,y,FT);
         
         disp('Obtaining stem responses...'); 
-        [splitters,trialtype,active] = splitter(x,y,FT);            
+        [cellResps,splitters,trialtype,active] = splitter(x,y,FT);
     end
     
-    numNeurons = length(splitters);         %Number of neurons. 
-    iter = 500;                             %Number of bootstrap iterations. 
+    %Number of neurons. 
+    iter = 500;   
+    numActiveNeurons = length(active);
+    numNeurons = length(cellResps); 
      
 %% Perform bootstrapping. 
     %Preallocate. 
@@ -41,11 +43,8 @@ function [sigcurve,deltacurve,ci,pvalue,tuningcurves,shufdelta,neuronID] = sigtu
     
     disp('Bootstrapping cell responses...'); 
     p = ProgressBar(numNeurons); 
-    for thisNeuron = 1:numNeurons
-        
-        [sigcurve{thisNeuron},deltacurve{thisNeuron},ci{thisNeuron},...
-            pvalue{thisNeuron},tuningcurves{thisNeuron},shufdelta{thisNeuron}] = ...
-            sigtuning(splitters{thisNeuron},trialtype,iter); 
+    for thisNeuron = 1:numActiveNeurons
+        thisActiveNeuron = active(thisNeuron);
         
         %This is a Nx1 vector (N=number of neurons active on the stem)
         %containing indices that reference the entire collection of
@@ -53,6 +52,12 @@ function [sigcurve,deltacurve,ci,pvalue,tuningcurves,shufdelta,neuronID] = sigtu
         %reason why we take a subset of the cells is to drastically cut
         %down on processing time for the bootstrap. 
         neuronID(thisNeuron) = active(thisNeuron); 
+
+        [sigcurve{thisActiveNeuron},deltacurve{thisActiveNeuron},...
+            ci{thisActiveNeuron},pvalue{thisActiveNeuron},...
+            tuningcurves{thisActiveNeuron},shufdelta{thisActiveNeuron}] = ...
+            sigtuning(splitters{active(thisActiveNeuron)},trialtype,iter); 
+
         p.progress;
        
     end
