@@ -1,4 +1,4 @@
-function [splitters,active] = splitterByTrialType(x,y,FT)
+function [cellResps,active] = splitterByTrialType(x,y,FT)
 %[splitters,active] = splitterByTrialType(x,y,FT)
 %
 %   Searches for transients on the stem for left and right trials. You then
@@ -44,9 +44,9 @@ function [splitters,active] = splitterByTrialType(x,y,FT)
     stemBins = find(stemOcc,1,'first'):find(stemOcc,1,'last'); 
    
     %Preallocate. 
-    splitters = cell(numNeurons,2);    
-    splitters(:,1) = {zeros(leftTrials,max(stemBins))}; 
-    splitters(:,2) = {zeros(rightTrials,max(stemBins))}; 
+    cellResps = cell(numNeurons,2);    
+    cellResps(:,1) = {zeros(leftTrials,max(stemBins))}; 
+    cellResps(:,2) = {zeros(rightTrials,max(stemBins))}; 
         
     %For each neuron and trial, count spikes in each spatial bin on the
     %stem.
@@ -63,10 +63,10 @@ function [splitters,active] = splitterByTrialType(x,y,FT)
             
             %Separate left vs right trials. 
             if unique(Alt.choice(Alt.trial == trialNum)) == 1
-                splitters{thisNeuron,1}(leftTrialCounter,:) = spkhist(stemBins);
+                cellResps{thisNeuron,1}(leftTrialCounter,:) = spkhist(stemBins);
                 leftTrialCounter = leftTrialCounter + 1; 
             elseif unique(Alt.choice(Alt.trial == trialNum)) == 2
-                splitters{thisNeuron,2}(rightTrialCounter,:) = spkhist(stemBins); 
+                cellResps{thisNeuron,2}(rightTrialCounter,:) = spkhist(stemBins); 
                 rightTrialCounter = rightTrialCounter + 1; 
             end
             
@@ -77,13 +77,13 @@ function [splitters,active] = splitterByTrialType(x,y,FT)
     p.stop;
     
     %Get active neurons. 
-    active = cellfun(@find,splitters,'unif',0); 
+    active = cellfun(@find,cellResps,'unif',0); 
     active = ~cellfun(@isempty,active); 
     active = find(any(active,2));
     
     %Take only the neurons that were active for at least one trial.     
-    splittersByTrialType = splitters(active,:); 
+    splittersByTrialType = cellResps(active,:); 
     
-    save('splittersByTrialType.mat','splittersByTrialType','active'); 
+    save('splittersByTrialType.mat','splittersByTrialType','stemCells','active'); 
     
 end

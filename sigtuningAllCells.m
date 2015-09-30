@@ -19,8 +19,11 @@ function [sigcurve,deltacurve,ci,pvalue,tuningcurves,shufdelta,neuronID] = sigtu
     try
         load('splitters.mat'); 
     catch
+        disp('Sorting stem responses...'); 
+        splitterByTrialType(x,y,FT);
+        
         disp('Obtaining stem responses...'); 
-        [splitters,trialtype,active] = splitter(x,y,FT);
+        [splitters,trialtype,active] = splitter(x,y,FT);            
     end
     
     numNeurons = length(splitters);         %Number of neurons. 

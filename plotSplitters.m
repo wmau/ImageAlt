@@ -4,11 +4,30 @@ function plotSplitters(splittersByTrialType,tuningcurves,deltacurve,sigcurve,ind
 %   Plots splitters lap by lap. 
 %
 %   INPUTS:
-%       splitters: Cell array output from splitterbyLaps.
+%       splittersByTrialType: Nx2 cell array (N=number of cells active on
+%       the stem) output from splitterByTrialType().
 %
-%       neuronID: Vector indexing neurons. 
+%       tuningcurves: Nx1 cell array containing 2xB matrices (B=number of
+%       stem bins). Each row is the tuning curve for left (1) and right (2)
+%       trials. 
 %
-%       tuningcurves (optional): output from sigtuning. 
+%       deltacurve: Nx1 cell array containing 1xB matrices that are the
+%       difference between the left and right tuning curves. Negative means
+%       left responses higher than right. 
+%
+%       sigcurve: Nx1 cell array containing 1xB binary matrices that
+%       indicate which bin contained statistically significant responses
+%       between left and right trials. 
+%       
+%       inds: Vector indexing splittersByTrialType telling the function
+%       what to plot. 
+%
+%       neuronID: Nx1 vector containing indices that reference FT (ie, the
+%       ith element references the ith neuron in splittersByTrialType but
+%       its value is the index of the neuron within FT. 
+%
+%       savepdf: Binary indicating whether or not you want to save every
+%       plot as a pdf. 
 %
 
 % if nargin < 5
@@ -66,9 +85,11 @@ function plotSplitters(splittersByTrialType,tuningcurves,deltacurve,sigcurve,ind
             end
             hold off;
             
+            %Fix up the plot. 
             xlim([1 length(deltasign)]); 
             xlabel('Stem Bins'); ylabel('Firing Rate'); legend({'Left','Right'}); 
             
+            %Save plot as pdf. 
             if savepdf==1
                 print(fullfile(pwd,['Neuron #',num2str(neuronID(inds(i)))]),'-dpdf');
             end

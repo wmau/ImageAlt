@@ -5,7 +5,7 @@ function plotSigSplitters(splittersByTrialType,tuningcurves,deltacurve,sigcurve,
 
 %%  Get statistically significant splitters
     sigSplitters = find(cellfun(@any,sigcurve)); 
-    savepdf = 1;
+    savepdf = 0;
     
     plotSplitters(splittersByTrialType,tuningcurves,deltacurve,sigcurve,sigSplitters,neuronID,savepdf); 
 end
