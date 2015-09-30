@@ -84,6 +84,6 @@ function [cellResps,active] = splitterByTrialType(x,y,FT)
     %Take only the neurons that were active for at least one trial.     
     splittersByTrialType = cellResps(active,:); 
     
-    save('splittersByTrialType.mat','splittersByTrialType','stemCells','active'); 
+    save('splittersByTrialType.mat','splittersByTrialType','cellResps','active'); 
     
 end
