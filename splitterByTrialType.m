@@ -1,21 +1,29 @@
 function [cellRespsByTrialType,splittersByTrialType,active] = splitterByTrialType(x,y,FT)
-%[splitters,active] = splitterByTrialType(x,y,FT)
+%[cellRespsByTrialType,splittersByTrialType,active] = splitterByTrialType(x,y,FT)
 %
-%   Searches for transients on the stem for left and right trials. You then
-%   have the capability of plotting cells that were active. 
+%   Searches for transients on the stem for left and right trials. 
 %
-%   INPUTS:
-%       X & Y: Tracking data from a position .mat. 
+%   INPUTS
+%       X & Y: Tracking data. I used the coordinates from aligned tracking
+%       data from batch_align_pos. 
 %
-%       FT: Output in ProcOut.mat.
+%       FT: Trace data, like in ProcOut. 
 %
-%   OUTPUTS: 
-%       splitters: Nx2 cell array (N = number of neurons) each containing
-%       a TxB array (T = number of trials for left and right trials, B =
-%       number of stem bins). 
+%   OUTPUTS
+%       cellRespsByTrialType: Nx2 (N=number of neurons) cell array
+%       containing TxB (T=number of left or right trials, B=number of stem
+%       bins) matrices. Each element is the number of spikes that occurred
+%       on that bin on that trial divided by the occupancy. The first
+%       column is left trials; the second is right trials.
 %
-%       active: Indices of cells that were active in either left or right
-%       trials. 
+%       splittersByTrialType: Bad choice of variable naming. Not actually
+%       statistically significant splitters yet. Same format as cellResps,
+%       but contains fewer cells (in both the MATLAB and the neuron sense),
+%       corresponding to the neurons that had responses on the stem. 
+%
+%       active: Mx1 vector (M=number of neurons active on the stem)
+%       containing indices that reference the neurons active on the stem in
+%       cellResps and FT. 
 %
 
 %% Linearize the trajectory and find bins in the center stem.   

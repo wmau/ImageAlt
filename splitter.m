@@ -1,9 +1,33 @@
 function [cellResps,splitters,trialtype,active] = splitter(x,y,FT)
-%splitter(x,y,FT)
+%[cellResps,splitters,trialtype,active] = splitter(x,y,FT)
 %
+%   Creates occupancy normalized matrices for the stem. 
+%
+%   INPUTS
+%       X & Y: Tracking data. I used the coordinates from aligned tracking
+%       data from batch_align_pos. 
+%
+%       FT: Trace data, like in ProcOut. 
+%
+%   OUTPUTS
+%       cellResps: Nx1 (N=number of neurons) cell array containing TxB
+%       (T=number of total trials, B=number of stem bins) matrices. Each
+%       element is the number of spikes that occurred on that bin on that
+%       trial divided by the occupancy. 
+%
+%       splitters: Bad choice of variable naming. Not actually
+%       statistically significant splitters yet. Same format as cellResps,
+%       but contains fewer cells (in both the MATLAB and the neuron sense),
+%       corresponding to the neurons that had responses on the stem. 
+%
+%       trialtype: Tx1 vector (1=left, 2=right) for input into sigtuning. 
+%
+%       active: Mx1 vector (M=number of neurons active on the stem)
+%       containing indices that reference the neurons active on the stem in
+%       cellResps and FT. 
 %
 
-%%     
+%%  
     numNeurons = size(FT,1); 
     nbins = 80; 
     FT = logical(FT); 
