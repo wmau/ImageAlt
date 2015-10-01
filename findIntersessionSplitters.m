@@ -127,16 +127,11 @@ end
  
 %% 
 function plotMultiDaySplitters(putativeSplitters,truncMap,inds,recur)
-    if recur
-        numNeurons = length(unique(cell2mat(inds))); 
-    else
-        numNeurons = length(cell2mat(inds)); 
-    end
     
     numSessions = length(putativeSplitters);
 
     for thisSESSION = 1:numSessions
-        for thisNeuron = 1:numNeurons
+        for thisNeuron = 1:length(inds{thisSESSION})
             figure; 
             
             for thisSession = 1:numSessions
