@@ -27,7 +27,7 @@ function [sigcurve,deltacurve,ci,pvalue,tuningcurves,shufdelta,neuronID] = sigtu
     end
     
     %Number of neurons. 
-    iter = 500;   
+    iter = 1000;   
     numActiveNeurons = length(active);
     numNeurons = length(cellResps); 
      
@@ -39,29 +39,28 @@ function [sigcurve,deltacurve,ci,pvalue,tuningcurves,shufdelta,neuronID] = sigtu
     pvalue = cell(numNeurons,1);
     tuningcurves = cell(numNeurons,1);
     shufdelta = cell(numNeurons,1);
-    neuronID = zeros(numNeurons,1); 
     
     disp('Bootstrapping cell responses...'); 
-    p = ProgressBar(numNeurons); 
+    p = ProgressBar(numActiveNeurons); 
     for thisNeuron = 1:numActiveNeurons
         thisActiveNeuron = active(thisNeuron);
-        
-        %This is a Nx1 vector (N=number of neurons active on the stem)
-        %containing indices that reference the entire collection of
-        %neurons. It's necessary to keep track of neuron identity. The
-        %reason why we take a subset of the cells is to drastically cut
-        %down on processing time for the bootstrap. 
-        neuronID(thisNeuron) = active(thisNeuron); 
 
         [sigcurve{thisActiveNeuron},deltacurve{thisActiveNeuron},...
             ci{thisActiveNeuron},pvalue{thisActiveNeuron},...
             tuningcurves{thisActiveNeuron},shufdelta{thisActiveNeuron}] = ...
-            sigtuning(splitters{active(thisActiveNeuron)},trialtype,iter); 
+            sigtuning(splitters{thisNeuron},trialtype,iter); 
 
         p.progress;
        
     end
     p.stop;
+    
+    %This is a Nx1 vector (N=number of neurons active on the stem)
+    %containing indices that reference the entire collection of
+    %neurons. It's necessary to keep track of neuron identity. The
+    %reason why we take a subset of the cells is to drastically cut
+    %down on processing time for the bootstrap. 
+    neuronID = active; 
     
     save('sigSplitters.mat','sigcurve','deltacurve','ci','pvalue',...
         'tuningcurves','shufdelta','neuronID'); 

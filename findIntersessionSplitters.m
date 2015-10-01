@@ -31,7 +31,6 @@ function findIntersessionSplitters(regStruct,baseStruct,sessionStruct)
         try
             load('sigSplitters.mat'); 
         catch
-            splitter(x,y,FT); 
             [sigcurve,deltacurve,ci,pvalue,tuningcurves,shufdelta,neuronID] = sigtuningAllCells(x,y,FT);
         end
         putativeSplitters(thisSession).date = sessionDates{thisSession};
@@ -47,9 +46,9 @@ function findIntersessionSplitters(regStruct,baseStruct,sessionStruct)
         try 
             load('splittersByTrialType.mat'); 
         catch
-            cellResps = splitterByTrialType(x,y,FT);
+            cellRespsByTrialType = splitterByTrialType(x,y,FT);
         end
-        putativeSplitters(thisSession).cellResps = cellResps;         
+        putativeSplitters(thisSession).cellRespsByTrialType = cellRespsByTrialType;         
         
     end
     
@@ -67,22 +66,23 @@ function findIntersessionSplitters(regStruct,baseStruct,sessionStruct)
     truncMap(cellfun('isempty',truncMap)) = {nan};
     truncMap = cell2mat(truncMap);  %Conversion to matrix for easier workflow. 
     
-    %Find row that contains the neurons we are interested in for the base
-    %session. 
-    [~,mapRowInd] = ismember(putativeSplitters(1).neuronID,truncMap(:,1));
-    
-    %For some reason, one cell in the example that I'm working with doesn't
-    %appear in neuronmap.
-    missingNeurons = putativeSplitters(1).neuronID(mapRowInd==0);    %Neuron in FT that's missing in neuronmap. 
-    mapRowInd(mapRowInd==0) = nan; 
-    
 %% 
     %Find splitters within truncMap. 
     sigSplitters = cell(numSessions,1); 
-    truncMapSplitters = nan(size(truncMap)); 
+    truncMapSplitters = zeros(size(truncMap)); 
     for thisSession = 1:numSessions
+        %Indexes FT. 
         sigSplitters{thisSession} = find(cellfun(@any,putativeSplitters(thisSession).sigcurve)); 
-        truncMapSplitters(:,thisSession) = ismember(truncMap(:,thisSession),putativeSplitters(thisSession).neuronID(sigSplitters{thisSession}));
+        
+        %Indexes truncMap.
+        [~,truncMapInds] = ismember(sigSplitters{thisSession},truncMap(:,thisSession));
+        
+        %For some reason, one cell in the example that I'm working with
+        %doesn't appear in neuronmap. Indexes FT.
+        missingNeurons = sigSplitters{thisSession}(truncMapInds==0);
+        truncMapInds(truncMapInds==0) = nan;
+        
+        truncMapSplitters(truncMapInds(~isnan(truncMapInds)),thisSession) = 1; 
     end
     
     %Since truncMapSplitters is a logical with the same dimensions as
@@ -143,36 +143,35 @@ function plotMultiDaySplitters(putativeSplitters,truncMap,inds,recur)
                 try
                     %Get index for cellResps. 
                     mapID = truncMap(inds{thisSESSION}(thisNeuron,thisSession),thisSession);        %References FT. 
-                    splitterInd = find(putativeSplitters(thisSession).neuronID==mapID); %References neuronID.
 
                     %For normalizing within a day, across trial types. 
-                    maxRate = max([max(putativeSplitters(thisSession).cellResps{mapID,1}), ...
-                        max(putativeSplitters(thisSession).cellResps{mapID,2})]); 
+                    maxRate = max([max(putativeSplitters(thisSession).cellRespsByTrialType{mapID,1}), ...
+                        max(putativeSplitters(thisSession).cellRespsByTrialType{mapID,2})]); 
 
                     subplot(2*numSessions,2,1+4*(thisSession-1));
-                        imagesc(putativeSplitters(thisSession).cellResps{mapID,1});
+                        imagesc(putativeSplitters(thisSession).cellRespsByTrialType{mapID,1});
                             title('Left Trials'); xlabel('Stem Bins'); ylabel('Lap');
                             caxis([0 maxRate]);
                     subplot(2*numSessions,2,2+4*(thisSession-1));  
-                        imagesc(putativeSplitters(thisSession).cellResps{mapID,2});
+                        imagesc(putativeSplitters(thisSession).cellRespsByTrialType{mapID,2});
                             title('Right Trials'); xlabel('Stem Bins'); ylabel('Lap');
                             caxis([0 maxRate]);
                     subplot(2*numSessions,2,3+4*(thisSession-1):4+4*(thisSession-1));
-                        plot(putativeSplitters(thisSession).tuningcurves{splitterInd}(1,:),'b');  %Left
+                        plot(putativeSplitters(thisSession).tuningcurves{mapID}(1,:),'b');  %Left
                             hold on;
-                        plot(putativeSplitters(thisSession).tuningcurves{splitterInd}(2,:),'r');  %Right
+                        plot(putativeSplitters(thisSession).tuningcurves{mapID}(2,:),'r');  %Right
 
 
                     %Determine whether this cell is more active on left or right
                     %trials by looking at the difference between the tuning curves.
-                    deltasign = sign(putativeSplitters(thisSession).deltacurve{splitterInd});
+                    deltasign = sign(putativeSplitters(thisSession).deltacurve{mapID});
                     deltasign(deltasign > 0) = 2;           %Right
                     deltasign(deltasign < 0) = 1;           %Left
 
                     for trialType = 1:2  %Left and right
 
                         %Statistically significant bins. 
-                        sigBins = find(deltasign==trialType & putativeSplitters(thisSession).sigcurve{splitterInd});
+                        sigBins = find(deltasign==trialType & putativeSplitters(thisSession).sigcurve{mapID});
 
                         %For placing asterisks a relative distance from the curve. 
                         ylim = get(gca,'ylim'); 
@@ -182,7 +181,7 @@ function plotMultiDaySplitters(putativeSplitters,truncMap,inds,recur)
                         if trialType == 1; col = 'b';       %Left       
                         else col = 'r'; end                 %Right                                
 
-                        plot(sigBins,putativeSplitters(thisSession).tuningcurves{splitterInd}(trialType,sigBins)+ylim(2)*sf,['*',col]);
+                        plot(sigBins,putativeSplitters(thisSession).tuningcurves{mapID}(trialType,sigBins)+ylim(2)*sf,['*',col]);
                     end
                         hold off;
 

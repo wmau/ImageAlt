@@ -1,4 +1,4 @@
-function plotSigSplitters(splittersByTrialType,tuningcurves,deltacurve,sigcurve,neuronID)
+function plotSigSplitters(cellRespsByTrialType,tuningcurves,deltacurve,sigcurve,neuronID)
 %
 %
 %
@@ -7,5 +7,5 @@ function plotSigSplitters(splittersByTrialType,tuningcurves,deltacurve,sigcurve,
     sigSplitters = find(cellfun(@any,sigcurve)); 
     savepdf = 0;
     
-    plotSplitters(splittersByTrialType,tuningcurves,deltacurve,sigcurve,sigSplitters,neuronID,savepdf); 
+    plotSplitters(cellRespsByTrialType,tuningcurves,deltacurve,sigcurve,sigSplitters,neuronID,savepdf); 
 end

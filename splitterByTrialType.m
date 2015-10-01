@@ -1,4 +1,4 @@
-function [cellResps,active] = splitterByTrialType(x,y,FT)
+function [cellRespsByTrialType,splittersByTrialType,active] = splitterByTrialType(x,y,FT)
 %[splitters,active] = splitterByTrialType(x,y,FT)
 %
 %   Searches for transients on the stem for left and right trials. You then
@@ -44,9 +44,9 @@ function [cellResps,active] = splitterByTrialType(x,y,FT)
     stemBins = find(stemOcc,1,'first'):find(stemOcc,1,'last'); 
    
     %Preallocate. 
-    cellResps = cell(numNeurons,2);    
-    cellResps(:,1) = {zeros(leftTrials,max(stemBins))}; 
-    cellResps(:,2) = {zeros(rightTrials,max(stemBins))}; 
+    cellRespsByTrialType = cell(numNeurons,2);    
+    cellRespsByTrialType(:,1) = {zeros(leftTrials,max(stemBins))}; 
+    cellRespsByTrialType(:,2) = {zeros(rightTrials,max(stemBins))}; 
         
     %For each neuron and trial, count spikes in each spatial bin on the
     %stem.
@@ -63,10 +63,10 @@ function [cellResps,active] = splitterByTrialType(x,y,FT)
             
             %Separate left vs right trials. 
             if unique(Alt.choice(Alt.trial == trialNum)) == 1
-                cellResps{thisNeuron,1}(leftTrialCounter,:) = spkhist(stemBins);
+                cellRespsByTrialType{thisNeuron,1}(leftTrialCounter,:) = spkhist(stemBins);
                 leftTrialCounter = leftTrialCounter + 1; 
             elseif unique(Alt.choice(Alt.trial == trialNum)) == 2
-                cellResps{thisNeuron,2}(rightTrialCounter,:) = spkhist(stemBins); 
+                cellRespsByTrialType{thisNeuron,2}(rightTrialCounter,:) = spkhist(stemBins); 
                 rightTrialCounter = rightTrialCounter + 1; 
             end
             
@@ -77,13 +77,13 @@ function [cellResps,active] = splitterByTrialType(x,y,FT)
     p.stop;
     
     %Get active neurons. 
-    active = cellfun(@find,cellResps,'unif',0); 
+    active = cellfun(@find,cellRespsByTrialType,'unif',0); 
     active = ~cellfun(@isempty,active); 
     active = find(any(active,2));
     
     %Take only the neurons that were active for at least one trial.     
-    splittersByTrialType = cellResps(active,:); 
+    splittersByTrialType = cellRespsByTrialType(active,:); 
     
-    save('splittersByTrialType.mat','splittersByTrialType','cellResps','active'); 
+    save('splittersByTrialType.mat','splittersByTrialType','cellRespsByTrialType','active'); 
     
 end
