@@ -82,6 +82,7 @@ function findIntersessionSplitters(regStruct,baseStruct,sessionStruct)
         missingNeurons = sigSplitters{thisSession}(truncMapInds==0);
         truncMapInds(truncMapInds==0) = nan;
         
+        %Logical array, same size as truncMap. 
         truncMapSplitters(truncMapInds(~isnan(truncMapInds)),thisSession) = 1; 
     end
     
@@ -104,7 +105,7 @@ function findIntersessionSplitters(regStruct,baseStruct,sessionStruct)
             end
         end
  
-        plotMultiDaySplitters(putativeSplitters,truncMap,recurringSplitters,1);
+        plotMultiDaySplitters(putativeSplitters,truncMap,recurringSplitters);
         
         %Ignore the recurring splitters after plotting them once. 
         truncMapSplitters(recurringSplitterInds,:) = 0; 
@@ -120,19 +121,19 @@ function findIntersessionSplitters(regStruct,baseStruct,sessionStruct)
     end
 
     %Plot the responses for each day. 
-    plotMultiDaySplitters(putativeSplitters,truncMap,transientSplitters,0);
+    plotMultiDaySplitters(putativeSplitters,truncMap,transientSplitters);
     
 end
 
  
 %% 
-function plotMultiDaySplitters(putativeSplitters,truncMap,inds,recur)
+function plotMultiDaySplitters(putativeSplitters,truncMap,inds)
     
     numSessions = length(putativeSplitters);
 
     for thisSESSION = 1:numSessions
         for thisNeuron = 1:length(inds{thisSESSION})
-            figure; 
+            figure('position',[-1244 -76 560 988]);
             
             for thisSession = 1:numSessions
                 try
@@ -182,7 +183,7 @@ function plotMultiDaySplitters(putativeSplitters,truncMap,inds,recur)
 
                     %Fix up the plot. 
                     xlim([1 length(deltasign)]); 
-                    xlabel('Stem Bins'); ylabel('Firing Rate'); legend({'Left','Right'});
+                    xlabel('Stem Bins'); ylabel('Firing Rate'); legend({'Left','Right'},'location','best');
                 catch
                 end
             end
