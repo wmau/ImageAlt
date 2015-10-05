@@ -8,7 +8,7 @@ function findIntersessionSplitters(regStruct,baseStruct,sessionStruct)
     sessionFilepaths = {baseStruct.Location, sessionStruct.Location};   %Filepaths of considered sessions. 
     sessionDates = {baseStruct.Date, sessionStruct.Date};               %Dates in the format MM_DD_YYYY.
     numSessions = length(sessionFilepaths);                             %Total number of sessions. 
-    savepdf = 1; 
+    savepdf = 0; 
     
     %Preallocate. 
     putativeSplitters = struct; 
@@ -117,7 +117,7 @@ function plotMultiDaySplitters(putativeSplitters,inds,savepdf)
     for thisNeuron = 1:numNeurons
         f = figure;
         f.Units = 'inches';
-        f.Position = [-13 5 5 8];
+        f.Position = [-13 1 5 8];
 
         for thisSession = 1:numSessions;
             mapID = inds(thisNeuron,thisSession);       %Indexes cellResps.
