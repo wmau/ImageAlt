@@ -42,8 +42,8 @@ function [cellRespsByTrialType,splittersByTrialType,active] = splitterByTrialTyp
     correct =  Alt.alt == 1;    
     correctTrials = unique(Alt.trial(correct));
     numTrials = length(correctTrials); 
-    leftTrials = sum(Alt.summary(:,2)==1);      %Number of left or right trials. 
-    rightTrials = sum(Alt.summary(:,2)==2); 
+    leftTrials = sum(Alt.summary(:,2)==1 & Alt.summary(:,3)==1);      %Number of left or right trials. 
+    rightTrials = sum(Alt.summary(:,2)==2 & Alt.summary(:,3)==1); 
     
     %Occupancy histogram.
     [~,edges] = histcounts(X,nbins); 

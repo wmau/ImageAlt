@@ -51,12 +51,12 @@ function plotSplitters(splittersByTrialType,tuningcurves,deltacurve,sigcurve,ind
         figure(inds(i));
         subplot(2,2,1);
             imagesc(splittersByTrialType{inds(i),1});
-                title('Left Trials'); xlabel('Stem Bins'); ylabel('Lap');
-                caxis([0 maxRate]);
+                title('Left Trials'); ylabel('Lap'); 
+                caxis([0 maxRate]); set(gca,'xtick',[]);
         subplot(2,2,2); 
             imagesc(splittersByTrialType{inds(i),2});
-                title('Right Trials'); xlabel('Stem Bins'); ylabel('Lap'); 
-                caxis([0 maxRate]); colormap('gray'); 
+                title('Right Trials'); ylabel('Lap'); 
+                caxis([0 maxRate]); colormap('gray'); set(gca,'xtick',[]);
         subplot(2,2,3:4)
             plot(tuningcurves{inds(i)}(1,:),'b');   %Left
                 hold on;
@@ -86,7 +86,7 @@ function plotSplitters(splittersByTrialType,tuningcurves,deltacurve,sigcurve,ind
             hold off;
             
             %Fix up the plot. 
-            xlim([1 length(deltasign)]); 
+            xlim([1 length(deltasign)]); set(gca,'ticklength',[0 0]); 
             xlabel('Stem Bins'); ylabel('Firing Rate'); legend({'Left','Right'},'location','best'); 
             
             %Save plot as pdf. 
