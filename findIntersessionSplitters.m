@@ -1,9 +1,18 @@
 function findIntersessionSplitters(regStruct,baseStruct,sessionStruct)
+%findIntersessionSplitters(regStruct,baseStruct,sessionStruct)
+%   
+%   Tracks splitters across days. First, plots neuronal responses on the
+%   stem that had significantly different tuning curves for left versus
+%   right trials. Then plots splitters that appeared on one day but not any
+%   others. 
 %
-%
+%   INPUTS
+%       regStruct, baseStruct, sessionStruct: MasteryDirectory entries that
+%       correspond to the session where the registration information lives,
+%       the base session, and the registered sessions, respectively. 
 %
 
-%%  
+%%  Extract splitter information for each session of interest. 
     regFilepath = regStruct.Location;                                   %Filepath for base image. 
     sessionFilepaths = {baseStruct.Location, sessionStruct.Location};   %Filepaths of considered sessions. 
     sessionDates = {baseStruct.Date, sessionStruct.Date};               %Dates in the format MM_DD_YYYY.
@@ -52,7 +61,7 @@ function findIntersessionSplitters(regStruct,baseStruct,sessionStruct)
         
     end
     
-%% 
+%% Get registered neurons. 
     %Get neuron map. 
     cd(regFilepath); 
     load('Reg_NeuronIDs_updatemasks0.mat'); 
@@ -66,7 +75,7 @@ function findIntersessionSplitters(regStruct,baseStruct,sessionStruct)
     truncMap(cellfun('isempty',truncMap)) = {nan};
     truncMap = cell2mat(truncMap);  %Conversion to matrix for easier workflow. 
     
-%% 
+%% Find splitters and plot them. 
     %Find splitters within truncMap. 
     sigSplitters = cell(numSessions,1); 
     truncMapSplitters = zeros(size(truncMap)); 
@@ -107,9 +116,8 @@ function findIntersessionSplitters(regStruct,baseStruct,sessionStruct)
     
 end
 
- 
-%% 
 function plotMultiDaySplitters(putativeSplitters,inds,savepdf)
+%% Nested function for plotting splitters across multiple imaging sesssions. 
 
     %Get data characteristics. 
     [numNeurons,numSessions] = size(inds); 
@@ -172,6 +180,7 @@ function plotMultiDaySplitters(putativeSplitters,inds,savepdf)
             elseif thisSession == 1; ylabel('Rate'); end
         end
         
+        %Save pdf. 
         if savepdf == 1
             export_fig(['Session #', num2str(thisSession),' Neuron #', num2str(inds(thisNeuron))],'-pdf','-r0'); 
         end
