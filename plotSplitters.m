@@ -1,4 +1,4 @@
-function plotSplitters(splittersByTrialType,tuningcurves,deltacurve,sigcurve,inds,savepdf)
+function plotSplitters(splittersByTrialType,tuningcurves,deltacurve,sigcurve,inds,savepdf,varargin)
 %plotSplitters(splitters,active)
 %
 %   Plots splitters lap by lap. 
@@ -29,6 +29,17 @@ function plotSplitters(splittersByTrialType,tuningcurves,deltacurve,sigcurve,ind
 %       savepdf: Binary indicating whether or not you want to save every
 %       plot as a pdf. 
 %
+%       varargins
+%           plot_type =  1 includes the significance curves at the bottomr, 2 
+%           stacks all 3 in a single column, 3 produces only rasters. 4 is the same
+%            as 1 but tacks on the 3D Tmap at the end, and requires inputting the
+%           appropriate TMap cell after 4 (e.g. ...'plot_type,'4,TMap). 1 =
+%           default.
+%
+%           invert_raster_color: plots with background white and transients
+%           in gray/black.  Default = 0 uses colormap(gray).
+%
+%           
 
 % if nargin < 5
 %     for i=1:length(inds)
@@ -45,49 +56,108 @@ function plotSplitters(splittersByTrialType,tuningcurves,deltacurve,sigcurve,ind
 %             ylabel('Lap'); 
 %     end
 % else
+
+%% Process varargins
+plot_type = 0; % default
+invert_raster_color = 0; % default
+for j = 1:length(varargin)
+   if strcmpi('plot_type',varargin{j})
+       plot_type = varargin{j+1};
+       if plot_type == 4
+           TMap_use = varargin{j+2};
+       end
+   end
+   if strcmpi('invert_raster_color',varargin{j})
+       invert_raster_color = varargin{j+1};
+   end
+end
+
+%% Run everything else
     for i=1:length(inds)
+        % Setup subplots ahead of time
+        figure(inds(i));
+        if plot_type == 1
+            subplot(2,2,1); h1 = gca;
+            subplot(2,2,2); h2 = gca;
+            subplot(2,2,3:4); h3 = gca;
+        elseif plot_type == 2
+            subplot(3,1,1); h1 = gca;
+            subplot(3,1,2); h2 = gca;
+            subplot(3,1,3); h3 = gca;
+        elseif plot_type == 3
+            subplot(1,2,1); h1 = gca;
+            subplot(1,2,2); h2 = gca;
+        elseif plot_type == 4
+            subplot(3,2,1); h1 = gca;
+            subplot(3,2,2); h2 = gca;
+            subplot(3,2,3:4); h3 = gca;
+            subplot(3,2,5:6); h4 = gca;
+        end
+        
         maxRate = max([max(splittersByTrialType{inds(i),1}),...
             max(splittersByTrialType{inds(i),2})]); 
-        figure(inds(i));
-        subplot(2,2,1);
+
+        subplot(h1);
             imagesc(splittersByTrialType{inds(i),1});
-                title('Left Trials'); xlabel('Stem Bins'); ylabel('Lap');
+                title('Left Trials'); xlabel('Stem Position'); ylabel('Lap');
                 caxis([0 maxRate]);
-        subplot(2,2,2); 
+                
+        subplot(h2); 
             imagesc(splittersByTrialType{inds(i),2});
-                title('Right Trials'); xlabel('Stem Bins'); ylabel('Lap'); 
-                caxis([0 maxRate]); colormap('gray'); 
-        subplot(2,2,3:4)
-            plot(tuningcurves{inds(i)}(1,:),'b');   %Left
-                hold on;
-            plot(tuningcurves{inds(i)}(2,:),'r');   %Right
-            
-            %Determine whether this cell is more active on left or right
-            %trials by looking at the difference between the tuning curves.
-            deltasign = sign(deltacurve{inds(i)});
-            deltasign(deltasign > 0) = 2;           %Right
-            deltasign(deltasign < 0) = 1;           %Left
-            
-            for trialType = 1:2  %Left and right
+                title('Right Trials'); xlabel('Stem Position'); ylabel('Lap'); 
+                caxis([0 maxRate]); cmap = colormap('gray');
+                if invert_raster_color == 1
+%                     cmap = get(gca,'ColorOrder');
+                    cmap2 = flip(cmap,1);
+                    colormap(h1,cmap2);
+                    colormap(h2,cmap2);
+                end
+                % Plot significance curves if specified
+                if plot_type == 1 || plot_type == 2 || plot_type == 4
+                    subplot(h3)
+                    plot(tuningcurves{inds(i)}(1,:),'b');   %Left
+                    hold on;
+                    plot(tuningcurves{inds(i)}(2,:),'r');   %Right
+                    
+                    %Determine whether this cell is more active on left or right
+                    %trials by looking at the difference between the tuning curves.
+                    deltasign = sign(deltacurve{inds(i)});
+                    deltasign(deltasign > 0) = 2;           %Right
+                    deltasign(deltasign < 0) = 1;           %Left
+                    
+                    for trialType = 1:2  %Left and right
+                        
+                        %Statistically significant bins.
+                        sigBins = find(deltasign==trialType & sigcurve{inds(i)});
+                        
+                        %For placing asterisks a relative distance from the curve.
+                        ylim = get(gca,'ylim');
+                        sf = 0.1;
+                        
+                        %Define color based on left or right trial.
+                        if trialType == 1; col = 'b';       %Left
+                        else col = 'r'; end                %Right
+                        
+                        plot(sigBins,tuningcurves{inds(i)}(trialType,sigBins)+ylim(2)*sf,['*',col]);
+                    end
+                    hold off;
+                    
+                    %Fix up the plot.
+                    xlim([1 length(deltasign)]);
+                    xlabel('Stem Bins'); ylabel('Transient Probability'); legend({'Left','Right'},'location','best');
+                    
+                    if plot_type == 4
+                       subplot(h4); imagesc_nan(rot90(TMap_use{inds(i)},-1));
+                       colormap(h4,'parula')
+                    end
+                end
                 
-                %Statistically significant bins. 
-                sigBins = find(deltasign==trialType & sigcurve{inds(i)});
-                
-                %For placing asterisks a relative distance from the curve. 
-                ylim = get(gca,'ylim'); 
-                sf = 0.1;
-                
-                %Define color based on left or right trial. 
-                if trialType == 1; col = 'b';       %Left       
-                else col = 'r'; end                %Right                                
-                            
-                plot(sigBins,tuningcurves{inds(i)}(trialType,sigBins)+ylim(2)*sf,['*',col]);
-            end
-            hold off;
-            
-            %Fix up the plot. 
-            xlim([1 length(deltasign)]); 
-            xlabel('Stem Bins'); ylabel('Firing Rate'); legend({'Left','Right'},'location','best'); 
+                % Attempt to add in text...
+                annotation(figure(inds(i)),'textbox',...
+                    [0.21584375 0.965760322255791 0.58025 0.026183282980866],...
+                    'String',{['GCamp6f\_30 Neuron' num2str(inds(i))]},...
+                    'FitBoxToText','off','LineStyle','none');
+
             
             %Save plot as pdf. 
             if savepdf==1
