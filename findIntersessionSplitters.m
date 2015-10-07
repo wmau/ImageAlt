@@ -17,7 +17,7 @@ function findIntersessionSplitters(regStruct,baseStruct,sessionStruct)
     sessionFilepaths = {baseStruct.Location, sessionStruct.Location};   %Filepaths of considered sessions. 
     sessionDates = {baseStruct.Date, sessionStruct.Date};               %Dates in the format MM_DD_YYYY.
     numSessions = length(sessionFilepaths);                             %Total number of sessions. 
-    savepdf = 0; 
+    savepdf = 0;
     
     %Preallocate. 
     putativeSplitters = struct; 
@@ -100,9 +100,10 @@ function findIntersessionSplitters(regStruct,baseStruct,sessionStruct)
     %multiple days if we look for sums more than 1.
     recurringSplitterInds = find(sum(truncMapSplitters,2)>1);      %Row index for truncMap. 
     recurringSplitters = truncMap(recurringSplitterInds,:);
+    recur = 1;
 
     %Plot them. 
-    plotMultiDaySplitters(putativeSplitters,recurringSplitters,savepdf);
+    plotMultiDaySplitters(putativeSplitters,recurringSplitters,savepdf,recur);
     
     %Deselect the splitters we've already plotted. 
     truncMapSplitters(recurringSplitterInds,:) = 0; 
@@ -110,14 +111,16 @@ function findIntersessionSplitters(regStruct,baseStruct,sessionStruct)
     %Get splitters that were significant for one session. 
     [transientSplitterInds,~] = find(truncMapSplitters);
     transientSplitters = truncMap(transientSplitterInds,:);
+    recur = 0; 
 
     %Plot the responses for each day. 
-    plotMultiDaySplitters(putativeSplitters,transientSplitters,savepdf);
+    plotMultiDaySplitters(putativeSplitters,transientSplitters,savepdf,recur);
     
 end
 
-function plotMultiDaySplitters(putativeSplitters,inds,savepdf)
+function plotMultiDaySplitters(putativeSplitters,inds,savepdf,recur)
 %% Nested function for plotting splitters across multiple imaging sesssions. 
+    savepath = 'E:\Imaging Data\Endoscope\GCaMP6f_30\Alternation\11_12_2014\Register to 11_13';
 
     %Get data characteristics. 
     [numNeurons,numSessions] = size(inds); 
@@ -181,8 +184,13 @@ function plotMultiDaySplitters(putativeSplitters,inds,savepdf)
         end
         
         %Save pdf. 
-        if savepdf == 1
-            export_fig(['Session #', num2str(thisSession),' Neuron #', num2str(inds(thisNeuron))],'-pdf','-r0'); 
+        if savepdf
+            %export_fig(['Session #', num2str(thisSession),' Neuron #', num2str(inds(thisNeuron))],'-pdf','-r0'); 
+            if recur
+                print(fullfile(savepath,['MultiDay Neuron #', num2str(thisNeuron)]),'-dpdf');
+            else
+                print(fullfile(savepath,['Neuron #', num2str(thisNeuron)]),'-dpdf');
+            end
         end
     end
 
