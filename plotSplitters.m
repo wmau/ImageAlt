@@ -73,25 +73,26 @@ for j = 1:length(varargin)
 end
 
 %% Run everything else
+    if ismember(plot_type,[1:4]); 
     for i=1:length(inds)
         % Setup subplots ahead of time
         figure(inds(i));
         if plot_type == 1
-            subplot(2,2,1); h1 = gca;
-            subplot(2,2,2); h2 = gca;
-            subplot(2,2,3:4); h3 = gca;
+            h1 = subplot(2,2,1);
+            h2 = subplot(2,2,2); 
+            h3 = subplot(2,2,3:4);
         elseif plot_type == 2
-            subplot(3,1,1); h1 = gca;
-            subplot(3,1,2); h2 = gca;
-            subplot(3,1,3); h3 = gca;
+            h1 = subplot(3,1,1); 
+            h2 = subplot(3,1,2); 
+            h3 = subplot(3,1,3); 
         elseif plot_type == 3
-            subplot(1,2,1); h1 = gca;
-            subplot(1,2,2); h2 = gca;
+            h1 = subplot(1,2,1);  
+            h2 = subplot(1,2,2); 
         elseif plot_type == 4
-            subplot(3,2,1); h1 = gca;
-            subplot(3,2,2); h2 = gca;
-            subplot(3,2,3:4); h3 = gca;
-            subplot(3,2,5:6); h4 = gca;
+            h1 = subplot(3,2,1); 
+            h2 = subplot(3,2,2); 
+            h3 = subplot(3,2,3:4); 
+            h4 = subplot(3,2,5:6); 
         end
         
         maxRate = max([max(splittersByTrialType{inds(i),1}),...
@@ -131,14 +132,14 @@ end
                         sigBins = find(deltasign==trialType & sigcurve{inds(i)});
                         
                         %For placing asterisks a relative distance from the curve.
-                        ylim = get(gca,'ylim');
+                        yLim = get(gca,'ylim');
                         sf = 0.1;
                         
                         %Define color based on left or right trial.
                         if trialType == 1; col = 'b';       %Left
                         else col = 'r'; end                %Right
                         
-                        plot(sigBins,tuningcurves{inds(i)}(trialType,sigBins)+ylim(2)*sf,['*',col]);
+                        plot(sigBins,tuningcurves{inds(i)}(trialType,sigBins)+yLim(2)*sf,['*',col]);
                     end
                     hold off;
                     
@@ -165,5 +166,124 @@ end
             end
             
     end
+    
  %end
+    end
+    
+%% Stack rasters and overlay histogram. 
+    %Number of left trials. We'll need this value when we separate the left
+    %and right trials with a red line. 
+    [nLTrials,nBins] = size(splittersByTrialType{1,1});
+    nTrials = size(splittersByTrialType{1,2},1) + nLTrials;
+    binDims = [1,nBins]; trialDims = [1,nTrials];
+    bins = [1:0.001:nBins]';
+
+    for i=1:length(inds)
+        f = figure(inds(i));
+        f.Position = [520 254 481 544];
+        
+        %Concatenate the rasters. Now we have one matrix with left trials
+        %first and right trials start at index numLTrials+1. 
+        raster = [  splittersByTrialType{inds(i),1};
+                    splittersByTrialType{inds(i),2}     ];  
+                
+        %Smoothing.
+        leftFit = fit([1:34]',tuningcurves{inds(i)}(1,:)','smoothingspline');
+        rightFit = fit([1:34]',tuningcurves{inds(i)}(2,:)','smoothingspline');
+        leftCurve = feval(leftFit,bins);
+        rightCurve = feval(rightFit,bins);
+                
+        if plot_type == 5
+        %Plot everything using plotyy. First y axis will be laps. Second
+        %will be rate. 
+            hold on;
+            [h,~,splitCurves] = plotyy(binDims,trialDims,[bins, bins],[leftCurve, rightCurve]);   
+                splitCurves(1).LineWidth = 2; splitCurves(1).Color = 'b';
+                splitCurves(2).LineWidth = 2; splitCurves(2).Color = 'r';
+                splitCurves = [leftCurve, rightCurve];
+                set(h(1),'ydir','reverse'); 
+            imagesc(raster);
+            line(binDims,[nLTrials+0.5,nLTrials+0.5],'Color','g','LineWidth',2);
+                yLim = get(h(2),'ylim');
+                axis(h(1),[binDims,trialDims]); 
+                set(h(1),'ytick',[1:10:nTrials]);    
+                set(h(2),'ylim',[0,yLim(2)]);
+                cmap = colormap('gray');
+                if invert_raster_color == 1
+                    cmap = flip(cmap,1);
+                    colormap(h(1),cmap);
+                end
+                set(get(h(1),'Ylabel'),'String','Laps');
+                set(get(h(2),'Ylabel'),'String','Rate'); 
+                xlabel('Stem Bins'); xlim([1 nBins]);
+                
+%             [BIN,SIG] = significance(deltacurve,sigcurve,splitCurves,inds,i,bins,1);
+%             plot(BIN{1},SIG{1},'b*',BIN{2},SIG{2},'r*');
+                hold off;
+                
+                
+        elseif plot_type == 6
+            subplot(2,1,1);           
+            imagesc(raster);
+            line(binDims,[nLTrials+0.5,nLTrials+0.5],'Color','g','LineWidth',2);  
+                set(gca,'ytick',[1:10:nTrials]);    
+                cmap = colormap('gray');
+                if invert_raster_color == 1
+                    cmap = flip(cmap,1);
+                    colormap(gca,cmap);
+                end
+            ylabel('Laps'); 
+            
+            subplot(2,1,2);
+            plot(bins,leftCurve,'b',bins,rightCurve,'r');
+                xlabel('Stem Bins'); ylabel('Rate'); 
+                hold on;
+                
+            splitCurves = [leftCurve,rightCurve];
+            [BIN,SIG] = significance(deltacurve,sigcurve,splitCurves,inds,i,bins,1);
+            plot(BIN{1},SIG{1},'b*',BIN{2},SIG{2},'r*');
+                yLims = get(gca,'ylim');
+                ylim([0,yLims(2)]);
+                hold off;
+        end
+            
+
+        if savepdf==1
+            print(fullfile(pwd,['Neuron #',num2str(inds(i))]),'-dpdf');
+        end
+
+    end
+end
+
+function [BIN,SIG] = significance(deltacurve,sigcurve,splitCurves,inds,i,bins,smooth)
+    %Determine whether this cell is more active on left or right
+    %trials by looking at the difference between the tuning curves.
+    deltasign = sign(deltacurve{inds(i)});
+    deltasign(deltasign > 0) = 2;           %Right
+    deltasign(deltasign < 0) = 1;           %Left
+
+    for trialType = 1:2  %Left and right
+
+        %Statistically significant bins.
+        sigBins = find(deltasign==trialType & sigcurve{inds(i)});
+
+        %For placing asterisks a relative distance from the curve.
+        YLIM = get(gca,'ylim');
+        sf = 0.1;
+        
+        %For smoothed vectors, which are longer. Hard coded for 1000 bins
+        %for every 1 stem bin.         
+        sigBinInds = sigBins;
+        if smooth
+            [~,sigBinInds] = ismember(sigBins,bins);
+        end
+
+        %Define color based on left or right trial.
+        if trialType == 1; col = 'b';       %Left
+        else col = 'r'; end                %Right
+
+        BIN{trialType} = sigBins; 
+        SIG{trialType} = splitCurves(sigBinInds,trialType)+YLIM(2)*sf;
+    end
+    
 end
