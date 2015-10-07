@@ -232,7 +232,7 @@ end
                     cmap = flip(cmap,1);
                     colormap(gca,cmap);
                 end
-            ylabel('Laps'); 
+                ylabel('Laps'); set(gca,'ticklength',[0 0]);
             
             subplot(2,1,2);
             plot(bins,leftCurve,'b',bins,rightCurve,'r');
@@ -245,6 +245,8 @@ end
                 yLims = get(gca,'ylim');
                 ylim([0,yLims(2)]);
                 hold off;
+                set(gca,'ticklength',[0 0]);
+                legend({'Left','Right'},'location','best');
         end
             
 
