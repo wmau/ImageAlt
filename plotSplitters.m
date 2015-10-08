@@ -235,7 +235,7 @@ end
                 ylabel('Laps'); set(gca,'ticklength',[0 0]);
             
             subplot(2,1,2);
-            plot(bins,leftCurve,'b',bins,rightCurve,'r');
+            plot(bins,leftCurve,'b',bins,rightCurve,'r','LineWidth',2);
                 xlabel('Stem Bins'); ylabel('Rate'); 
                 hold on;
                 
@@ -243,9 +243,9 @@ end
             [BIN,SIG] = significance(deltacurve,sigcurve,splitCurves,inds,i,bins,1);
             plot(BIN{1},SIG{1},'b*',BIN{2},SIG{2},'r*');
                 yLims = get(gca,'ylim');
-                ylim([0,yLims(2)]);
+                ylim([0,yLims(2)]); xlim([1,nBins]);
                 hold off;
-                set(gca,'ticklength',[0 0]);
+                set(gca,'ticklength',[0 0]); 
                 legend({'Left','Right'},'location','best');
         end
             
