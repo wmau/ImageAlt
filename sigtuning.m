@@ -56,7 +56,9 @@ function [sigcurve,deltacurve,ci,pvalue,tuningcurves,shufdelta] = sigtuning(rate
             %randcurves(m,:)=smooth(randcurves(m,:),5,'rlowess'); 
         end
 
-        %Find difference in tuning for shuffled curves
+        %Find difference in tuning for shuffled curves. White noise is
+        %added to the signal to fix some screwy things that happen with
+        %permuting discrete variables. 
         shufdelta(x,:)=diff(randcurves);
         whitenoise = 0.01*randn(1,nBins);
         shufdelta(x,:) = shufdelta(x,:)+whitenoise;
@@ -69,8 +71,8 @@ function [sigcurve,deltacurve,ci,pvalue,tuningcurves,shufdelta] = sigtuning(rate
     pvalue=sum(shufdelta>repmat(deltacurve,iter,1))./iter;
     negpvalue=1-pvalue;
     negdelta=deltacurve<0;
-    pvalue(negdelta)=negpvalue(negdelta);%Substitute p-value when sign reverses
-    pvalue(deltacurve==0) = 1; 
+    pvalue(negdelta)=negpvalue(negdelta);   %Substitute p-value when sign reverses
+    pvalue(deltacurve==0) = 1;              %Stem bins where there is no tuning curve difference are not considered. 
     sigcurve=pvalue<(1-sigp);
 
     %Create confidence intervals

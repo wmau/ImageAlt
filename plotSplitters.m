@@ -30,12 +30,20 @@ function plotSplitters(splittersByTrialType,tuningcurves,deltacurve,sigcurve,ind
 %       plot as a pdf. 
 %
 %       varargins
-%           plot_type =  1 includes the significance curves at the bottomr, 2 
-%           stacks all 3 in a single column, 3 produces only rasters. 4 is the same
-%            as 1 but tacks on the 3D Tmap at the end, and requires inputting the
-%           appropriate TMap cell after 4 (e.g. ...'plot_type,'4,TMap). 1 =
-%           default.
-%
+%           plot_type =  
+%               1 (default) includes the significance curves at the bottom.
+%               2 stacks all 3 in a single column.
+%               3 produces only rasters. 
+%               4 is the same as 1 but tacks on the 3D Tmap at the end, and
+%                   requires inputting the appropriate TMap cell after 4
+%                   (e.g. ...'plot_type,'4,TMap).
+%               5 concatenates the left and right turn rasters then
+%                   overlays a smoothed calcium event histogram. Note that
+%                   significance markers are not plotted because they're hard
+%                   to see. 
+%               6 does the same as 5 but the histogram is a separate
+%                   subplot.
+%               
 %           invert_raster_color: plots with background white and transients
 %           in gray/black.  Default = 0 uses colormap(gray).
 %
@@ -193,6 +201,7 @@ end
         leftCurve = feval(leftFit,bins);
         rightCurve = feval(rightFit,bins);
                 
+        %% Raster with overlaid smoothed histogram. 
         if plot_type == 5
         %Plot everything using plotyy. First y axis will be laps. Second
         %will be rate. 
@@ -221,7 +230,7 @@ end
 %             plot(BIN{1},SIG{1},'b*',BIN{2},SIG{2},'r*');
                 hold off;
                 
-                
+        %% Concatenated raster with separate smoothed histogram. 
         elseif plot_type == 6
             subplot(2,1,1);           
             imagesc(raster);
