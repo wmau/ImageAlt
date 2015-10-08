@@ -196,8 +196,8 @@ end
                     splittersByTrialType{inds(i),2}     ];  
                 
         %Smoothing.
-        leftFit = fit([1:34]',tuningcurves{inds(i)}(1,:)','smoothingspline');
-        rightFit = fit([1:34]',tuningcurves{inds(i)}(2,:)','smoothingspline');
+        leftFit = fit([1:nBins]',tuningcurves{inds(i)}(1,:)','smoothingspline');
+        rightFit = fit([1:nBins]',tuningcurves{inds(i)}(2,:)','smoothingspline');
         leftCurve = feval(leftFit,bins);
         rightCurve = feval(rightFit,bins);
                 
