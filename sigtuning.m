@@ -25,10 +25,10 @@ function [sigcurve,deltacurve,ci,pvalue,tuningcurves,shufdelta] = sigtuning(rate
         sigp=0.95;
     end
     
-    numTrials = length(trialtype);
-
+    nTrials = length(trialtype);
+    nBins = size(ratebylap,2);
 %% Develop tuning curves for left and right turns.
-    tuningcurves=nan(2,size(ratebylap,2));
+    tuningcurves=nan(2,nBins);
     for m=1:2
         tuningcurves(m,:)=nanmean(ratebylap(trialtype==m,:));
         %tuningcurves(m,:)=smooth(tuningcurves(m,:),5,'rlowess');
@@ -40,15 +40,15 @@ function [sigcurve,deltacurve,ci,pvalue,tuningcurves,shufdelta] = sigtuning(rate
 %% Bootstrap significance: 
 %   Resample curves after shuffling trial identities and subtract for each
 %   iteration.
-    shufdelta=nan(iter,size(ratebylap,2));
+    shufdelta=nan(iter,nBins);
     
     %Permute trialtypes
-    randtt = nan(numTrials,iter); 
+    randtt = nan(nTrials,iter); 
     for x=1:iter
-        randtt(:,x) = trialtype(randperm(numTrials));
+        randtt(:,x) = trialtype(randperm(nTrials));
     end
     
-    parfor x=1:iter
+    for x=1:iter
         %Resample trials and calculate tuning curves
         randcurves=nan(2,size(ratebylap,2));
         for m=1:2
@@ -56,8 +56,12 @@ function [sigcurve,deltacurve,ci,pvalue,tuningcurves,shufdelta] = sigtuning(rate
             %randcurves(m,:)=smooth(randcurves(m,:),5,'rlowess'); 
         end
 
-        %Find difference in tuning for shuffled curves
+        %Find difference in tuning for shuffled curves. White noise is
+        %added to the signal to fix some screwy things that happen with
+        %permuting discrete variables. 
         shufdelta(x,:)=diff(randcurves);
+        whitenoise = 0.01*randn(1,nBins);
+        shufdelta(x,:) = shufdelta(x,:)+whitenoise;
     end
 
 %% Identify significance regions. 
@@ -67,9 +71,8 @@ function [sigcurve,deltacurve,ci,pvalue,tuningcurves,shufdelta] = sigtuning(rate
     pvalue=sum(shufdelta>repmat(deltacurve,iter,1))./iter;
     negpvalue=1-pvalue;
     negdelta=deltacurve<0;
-    pvalue(negdelta)=negpvalue(negdelta);%Substitute p-value when sign reverses
-    pvalue(pvalue==0) = 1; 
-
+    pvalue(negdelta)=negpvalue(negdelta);   %Substitute p-value when sign reverses
+    pvalue(deltacurve==0) = 1;              %Stem bins where there is no tuning curve difference are not considered. 
     sigcurve=pvalue<(1-sigp);
 
     %Create confidence intervals

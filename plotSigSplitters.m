@@ -38,7 +38,7 @@ end
 
 %%  Get statistically significant splitters
     sigSplitters = find(cellfun(@any,sigcurve)); 
-    savepdf = 1;            %Toggle whether you want to save all rasters as pdfs. 
+    savepdf = 0;            %Toggle whether you want to save all rasters as pdfs. 
     
     if plot_type ~= 4
         plotSplitters(cellRespsByTrialType,tuningcurves,deltacurve,sigcurve,...
