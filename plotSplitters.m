@@ -143,7 +143,7 @@ end
                     hold off;
                     
                     %Fix up the plot.
-                    xlim([1 length(deltasign)]);
+                    xlim([1 length(deltasign)]); set(gca,'ticklength',[0 0]); 
                     xlabel('Stem Bins'); ylabel('Transient Probability'); legend({'Left','Right'},'location','best');
                     
                     if plot_type == 4
