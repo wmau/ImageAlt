@@ -6,7 +6,7 @@ function [Xbin,Ybin] = bin2DTrajectory(x,y,cmperbin)
 %   INPUTS
 %       X & Y: Tracking data. 
 %
-%       cmperbin: Centimeters per pixel. Usually 0.25. 
+%       cmperbin: Centimeters per pixel. Usually 2. 
 %
 
     Xrange = max(x)-min(x);

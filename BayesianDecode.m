@@ -7,7 +7,8 @@ function [Mdl,XBin,YBin] = BayesianDecode(x,y,FT)
 %   INPUTS
 %       X & Y: Tracking data. 
 %
-%       FT: Calcium imaging data from ProcOut.mat.
+%       FT: Calcium imaging data from ProcOut.mat. Note that you can also
+%       index neurons (e.g., place cells, excluding nonspatial celsl). 
 %
 
 %% Construct a Bayesian model using a random subset of training data. 
@@ -40,4 +41,6 @@ function [Mdl,XBin,YBin] = BayesianDecode(x,y,FT)
     %Fit the model using a multivariate multinomial distribution. 
     Mdl = fitcnb(X,Y,'Distribution','mvmn','ClassNames',(1:prod(borders)),'Prior','uniform'); 
     Mdl = compact(Mdl); 
+    
+    save('BayesianMdl.mat','Mdl'); 
 end
