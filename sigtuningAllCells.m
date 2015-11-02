@@ -70,7 +70,9 @@ function [sigcurve,deltacurve,ci,pvalue,tuningcurves,shufdelta,neuronID] = sigtu
     %drastically cut down on processing time for the bootstrap.
     neuronID = active; 
     
+    numSplitters = length(find(cellfun(@any,sigcurve)));
+    
     save('sigSplitters.mat','sigcurve','deltacurve','ci','pvalue',...
-        'tuningcurves','shufdelta','neuronID'); 
+        'tuningcurves','shufdelta','neuronID','numSplitters'); 
     
 end
