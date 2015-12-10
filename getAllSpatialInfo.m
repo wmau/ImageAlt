@@ -59,4 +59,6 @@ function [I,sig,surrogate] = getAllSpatialInfo(sessionStruct)
     %Logical indexing significant neurons with a nonzero information score.
     sig = pval<0.05 & I>0;
     
+    save('SpatialInfo.mat','I','sig','surrogate','pval');
+    
 end

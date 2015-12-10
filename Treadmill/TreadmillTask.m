@@ -3,24 +3,24 @@ function TreadmillTask(settings)
 daq.reset;
 rstream = RandStream('mt19937ar','Seed', mod(prod(clock()),2^32));
 RandStream.setGlobalStream(rstream);
-tr= Treadmill('COM2');
+tr= Treadmill('COM3');
 defsettings.valves = true;
 defsettings.protocol = 'Normal';
 defsettings.protocol = 'No Alternation';
-defsettings.leftporttime = 200;
-defsettings.rightporttime = 200;
+defsettings.leftporttime = 12;
+defsettings.rightporttime = 12;
 defsettings.mapserver = false;
 defsettings.joystick = true;
 defsettings.tracking = false;
 defsettings.blocking = inf;
 defsettings.maze = 'Treadmill';
 defsettings.training= true;
-defsettings.deltaspeed = 5;
+defsettings.deltaspeed = 2;
 
 
 defsettings.treadmill.on = true;
-defsettings.treadmill.speeds = 30;
-defsettings.treadmill.times = 20 ;
+defsettings.treadmill.speeds = 6;
+defsettings.treadmill.times = 6;
 defsettings.treadmill.distances = 1500;
 defsettings.treadmill.fixed = 'time'; % Fixed parameter
 defsettings.treadmill.vary = 'speed'; % Independant parameter
@@ -31,16 +31,16 @@ defsettings.treadmill.range = false; % True means use continuous range.
 
 defsettings.treadmill.rewardbefore = 0; % Give water reward before starting treadmill
 defsettings.treadmill.delay = 0; % Delay before starting treadmill (after water, sec)
-defsettings.treadmill.rewardafter  = 200; % Give water reward after stopping treadmill
+defsettings.treadmill.rewardafter  = 0; % Give water reward after stopping treadmill
 defsettings.treadmill.lapbefore = false; % Record lap when treadmilll starts
 defsettings.treadmill.lapafter = false; % Record lap when treadmill stops
 defsettings.treadmill.pausenotstop = true; % Remember settings when manually stopping treadmill
 
 
 % Initialize variables for use later.
-LEFT_VALVE = 3;               % Output bit for left valve
-MIDD_VALVE = 4;               % Output bit for treadmill valve
-RIGH_VALVE = 5;               % Output bit for right valve
+LEFT_VALVE = 1;               % Output bit for left valve
+MIDD_VALVE = 2;               % Output bit for treadmill valve
+RIGH_VALVE = 3;               % Output bit for right valve
 EXTR_VALVE = 6;               % Output bit for extra valve
 TONE =    15;
 BUZZER = 14;
@@ -57,9 +57,9 @@ end
 [~, msgid] = lastwarn;
 %state = warning('off',msgid);
 dio=daq.createSession('ni');
-addDigitalChannel(dio, 'dev6', 'Port0/Line0:7', 'OutputOnly');
-addDigitalChannel(dio, 'dev6', 'Port1/Line0:7', 'OutputOnly');
-addDigitalChannel(dio, 'dev6', 'Port2/Line0:7', 'OutputOnly');
+addDigitalChannel(dio, 'Dev1', 'Port0/Line0:7', 'OutputOnly');
+addDigitalChannel(dio, 'Dev1', 'Port1/Line0:7', 'OutputOnly');
+addDigitalChannel(dio, 'Dev1', 'Port2/Line0:7', 'OutputOnly');
 %warning(state)  % restore state
 
 
@@ -130,7 +130,7 @@ treadmillind = 0;
 treadmillcurspeed = 0;
 treadmillcurtime = 0;
 treadmillpausestate = 0;
-middleporttime = 0;
+middleporttime = 25;
 
 trackstat.ready = false;
 joy = 0;
@@ -163,6 +163,7 @@ set(h.pause,'Callback',@playpause);
 set(h.reset,'Callback',@resetchecker);
 set(h.settings,'Callback',@settingscallback);
 set(h.showtimer,'Callback',@toggleTimer);
+set(h.flush,'Callback',@flush); 
 applysettings;
 
     function startfcn(varargin)
@@ -307,11 +308,11 @@ applysettings;
             case EVENTCODES.LV
                 output(h.maindsp, sprintf('Left Water Valve (%.2f)', sessionts));
                 if(s ~= 0); PL_SendUserEvent(s, event_num); end
-                left_valve();
+                left_valve(settings.leftporttime);
             case EVENTCODES.RV
                 output(h.maindsp, sprintf('Right Water Valve (%.2f)', sessionts));
                 if(s ~= 0); PL_SendUserEvent(s, event_num); end
-                right_valve();
+                right_valve(settings.rightporttime);
             case EVENTCODES.MV
                 output(h.maindsp, sprintf('Middle Water Valve (%.2f)', sessionts));
                 if(s ~= 0); PL_SendUserEvent(s, event_num); end
@@ -321,7 +322,7 @@ applysettings;
                 elseif(settings.treadmill.rewardafter > 0)
                     middleporttime = min(middleporttime, settings.treadmill.rewardafter);
                 end
-                middle_valve();
+                middle_valve(middleporttime);
             case EVENTCODES.BZC
                 output(h.maindsp, sprintf('Reversed on maze', sessionts));
                 pulseBit(BUZZER, 500);
@@ -403,6 +404,16 @@ applysettings;
                     output(h.maindsp, sprintf('Speed= %d', settings.treadmill.speeds));
                     tr.SetSpeed=settings.treadmill.speeds;
                 end
+            case EVENTCODES.INCDELAY
+                if(settings.training~=0)
+                    settings.treadmill.times = settings.treadmill.times + 1;
+                    output(h.maindsp, sprintf('Time =%d', settings.treadmill.times));   
+                end
+            case EVENTCODES.DECDELAY
+                if(settings.training~=0)
+                    settings.treadmill.times = settings.treadmill.times - 1;
+                    output(h.maindsp, sprintf('Time =%d', settings.treadmill.times));   
+                end
         end
     end
 
@@ -436,9 +447,9 @@ applysettings;
             if(strcmp(settings.protocol,'Normal') || ...
                     strcmp(settings.protocol,'No Alternation'))
                 switch this_turn
-                    case 'L'; left_valve();
-                    case 'R'; right_valve();
-                    case 'M'; middle_valve();
+                    case 'L'; left_valve(settings.leftporttime);
+                    case 'R'; right_valve(settings.rightporttime);
+                    case 'M'; middle_valve(middleporttime);
                 end
             end
         elseif(correctpath)
@@ -460,15 +471,15 @@ applysettings;
                 switch settings.protocol
                     case {'Normal', 'No Alternation'}
                         switch this_turn
-                            case 'L'; left_valve();
-                            case 'R'; right_valve();
-                            case 'M'; middle_valve();
+                            case 'L'; left_valve(settings.leftporttime);
+                            case 'R'; right_valve(settings.rightporttime);
+                            case 'M'; middle_valve(middleporttime);
                         end
                     case 'Opposite'
                         switch this_turn
-                            case 'L'; right_valve();
-                            case 'R'; left_valve();
-                            case 'M'; middle_valve();
+                            case 'L'; right_valve(settings.rightporttime);
+                            case 'R'; left_valve(settings.leftporttime);
+                            case 'M'; middle_valve(middleporttime);
                         end
                 end
             else
@@ -485,32 +496,32 @@ applysettings;
         if(correctpath); updateCounter(); end
     end
 
-    function left_valve(varargin) %#ok<VANUS>
+    function left_valve(duration) %#ok<VANUS>
         if(settings.valves && deviceNum > 0)
-            output(h.maindsp, sprintf('Left Valve (%0.0f ms)',settings.leftporttime));
-            pulseBit(LEFT_VALVE, settings.leftporttime);
+            output(h.maindsp, sprintf('Left Valve (%0.0f ms)',duration));
+            pulseBit(LEFT_VALVE, duration);
             pulseBit(PLX_LEFT_VALVE,1);
         else
             output(h.maindsp, 'Left Valve (test)');
         end
     end
 
-    function right_valve(varargin) %#ok<VANUS>
+    function right_valve(duration) %#ok<VANUS>
         if(settings.valves && deviceNum > 0)
-            output(h.maindsp, sprintf('Right Valve (%0.0f ms)',settings.rightporttime));
+            output(h.maindsp, sprintf('Right Valve (%0.0f ms)',duration));
             
-            pulseBit(RIGH_VALVE, settings.rightporttime);
+            pulseBit(RIGH_VALVE, duration);
             pulseBit(PLX_RIGH_VALVE,1);
         else
             output(h.maindsp, 'Right Valve (test)');
         end
     end
 
-    function middle_valve(varargin)
+    function middle_valve(duration)
         if(settings.valves && deviceNum > 0)
-            output(h.maindsp, sprintf('Middle Valve (%0.0f ms)',middleporttime));
+            output(h.maindsp, sprintf('Middle Valve (%0.0f ms)',duration));
             
-            pulseBit(MIDD_VALVE, middleporttime);
+            pulseBit(MIDD_VALVE, duration);
             pulseBit(PLX_MIDD_VALVE,1);
         else
             output(h.maindsp, 'Middle Valve (test)');
@@ -541,7 +552,7 @@ applysettings;
                 if(treadmillpausestate > 0); %do nothing
                 elseif(settings.treadmill.lapbefore)
                     alternate(EVENTCODES.MV, event_time);
-                else middle_valve();
+                else middle_valve(middleporttime);
                 end
                 treadmilldelay = toc(timeref);
                 treadmillinit = true;
@@ -674,7 +685,7 @@ applysettings;
                 middleporttime = settings.treadmill.rewardafter;
                 if(settings.treadmill.lapafter)
                     alternate(EVENTCODES.MV, toc(timeref));
-                else middle_valve();
+                else middle_valve(middleporttime);
                 end
             end
         end
@@ -899,7 +910,7 @@ applysettings;
                 end
                 output(h.maindsp, sprintf('History for %s loaded.',history.ratid));
                 applysettings;
-                textreport(history);
+                %textreport(history);
             end
         end
     end
@@ -921,7 +932,7 @@ applysettings;
             [history, success, sessionnum] = addSession(session, history, sessionnum);
             
             if(success)
-                [success, history] = saveHistory(history);
+                [success, history] = saveHistory(history, [], treadmillStartts, treadmillStopts);
                 
                 %Navigate to directory containing other data and save text
                 %file with treadmill start/stop timestamps. 
@@ -1147,9 +1158,9 @@ applysettings;
             clear dio;
             daq.reset;
             dio=daq.createSession('ni');
-            addDigitalChannel(dio, 'dev6', 'Port0/Line0:7', 'InputOnly');
-            addDigitalChannel(dio, 'dev6', 'Port1/Line0:7', 'InputOnly');
-            addDigitalChannel(dio, 'dev6', 'Port2/Line0:7', 'InputOnly');
+            addDigitalChannel(dio, 'Dev1', 'Port0/Line0:7', 'InputOnly');
+            addDigitalChannel(dio, 'Dev1', 'Port1/Line0:7', 'InputOnly');
+            addDigitalChannel(dio, 'Dev1', 'Port2/Line0:7', 'InputOnly');
             inputSingleScan(dio, ones(1,24));
         else warndlg('You must click ''Pause'' before closing this window.','Cannot Close');
         end
@@ -1171,6 +1182,20 @@ applysettings;
        outputSingleScan(dio,outVector);
         java.lang.Thread.sleep(time);
         outputSingleScan(dio,ones(1,24));
+    end
+    
+    function flush(varargin)
+        yn = questdlg('Do not flood the maze!! Are you sure to want to continue?', ...
+            'Confirmation','Yes','No','No'); 
+        switch yn
+            case 'Yes'
+                flushdur = 10000;
+                middle_valve(flushdur); 
+                left_valve(flushdur);
+                right_valve(flushdur);
+            case 'No'
+                output(h.maindsp, 'Flush canceled');
+        end
     end
 end
 
@@ -1235,6 +1260,10 @@ h.settings = uicontrol(h.controls,'Style','pushbutton',...
 h.showtimer = uicontrol(h.controls,'Style','pushbutton',...
     'Units','normalized','Position',[0.79 0.88 0.20 0.05],...
     'String','Show Timer');
+
+h.flush = uicontrol(h.controls,'Style','pushbutton',...
+    'Units','normalized','Position',[0.79 0.82 0.20 0.05],...
+    'String','Flush Tubes');
 
 h.settingsdsp = uicontrol(h.controls,'Style','text',...
     'Units','normalized','Position',[0.01 0.79 0.98 0.02]);
@@ -1453,7 +1482,7 @@ numrows = length(settingnames);
 
 winsize = [200 30+25*numrows];
 set(setwin,'Position',[parentwin(1)+50,...
-    parentwin(2)+parentwin(4)-winsize(2)-150,winsize]);
+    parentwin(2)+parentwin(4)-winsize(2),winsize]);
 
 for j = 1:numrows
     ypos = winsize(2)-j*25;
@@ -1508,4 +1537,3 @@ for j = 1:size(err.stack,1)
 end
 
 end
-
