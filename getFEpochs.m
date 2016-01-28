@@ -1,7 +1,7 @@
 function [onset,offset] = getFEpochs(FT)
 %[onset,offset] = getFEpochs(FT)
 %
-%   Get thet onsets and offsets of calcium events given a trace matrix. 
+%   Get the onsets and offsets of calcium events given a trace matrix. 
 %
 %   INPUT
 %       FT: From TENASPIS.
