@@ -33,7 +33,8 @@ function WM_batch_preprocess(varargin)
             filetofix = fileChunks(chunknum).name; 
             if ~exist([filetofix(1:end-4),'fixed.mat'],'file');
                 disp(['Checking ',filetofix,' for bad frames...']); 
-                FixFrames(filetofix); 
+                filepathtofix = fullfile(pathname,filetofix); 
+                FixFrames(filepathtofix); 
             else 
                 disp('File has been fixed already.'); 
                 disp(['Delete ',[filetofix(1:end-4),'fixed.mat'], ' if you wish to rerun.']); 
