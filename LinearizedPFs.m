@@ -67,11 +67,11 @@ function [lefttrials,righttrials,goalbins] = LinearizedPFs(X,FT)
     %Bin locations where each neuron spiked then divide by the occupancy
     %map.
     for this_neuron = 1:nneurons
-        lspkpos = X(FT(this_neuron,isrunning & left));
-        rspkpos = X(FT(this_neuron,isrunning & right)); 
+        lspkpos = X(FT(this_neuron,:) & isrunning & left);
+        rspkpos = X(FT(this_neuron,:) & isrunning & right); 
         
-        lbinned = hist(lspkpos,nbins);
-        rbinned = hist(rspkpos,nbins); 
+        lbinned = histcounts(lspkpos,edges);
+        rbinned = histcounts(rspkpos,edges); 
         
         lrate(this_neuron,:) = lbinned ./ occ; 
         rrate(this_neuron,:) = rbinned ./ occ;
