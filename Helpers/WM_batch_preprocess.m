@@ -86,10 +86,6 @@ function WM_batch_preprocess(varargin)
         elseif nDropped>0 && exist(fullfile(pathname,'BrokenMovie_fixed-Objects'),'dir')
             disp('Movie has already been fixed. Delete BrokenMovie_fixed folder to rerun, else enter return.');
             keyboard; 
-        elseif nDropped==0 && concat
-            disp('Concatenated movie saved! Load ConcatMovie in Mosaic standalone for motion correction.'); 
-        elseif ~concat
-            disp('Batch preprocess session concluded. Load XML in Mosaic standalone for motion correction.'); 
         end
     end
 %% Close.
